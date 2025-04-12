@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +24,7 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import { useSocietySelection } from '@/hooks/useSocietySelection';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home } from 'lucide-react';
+import { Home, Loader2 } from 'lucide-react';
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -34,7 +35,8 @@ const signupSchema = z.object({
 });
 
 const TenantSignup = () => {
-  const { societies, fetchSocieties } = useSocietySelection();
+  const { societies, fetchSocieties, loading } = useSocietySelection();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const { 
@@ -47,11 +49,23 @@ const TenantSignup = () => {
   });
 
   useEffect(() => {
-    fetchSocieties();
+    const loadSocieties = async () => {
+      await fetchSocieties();
+    };
+    
+    loadSocieties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Log societies whenever they change
+  useEffect(() => {
+    console.log('Societies in component:', societies);
+  }, [societies]);
 
   const onSubmit = async (data: z.infer<typeof signupSchema>) => {
     try {
+      setIsSubmitting(true);
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password
@@ -86,6 +100,8 @@ const TenantSignup = () => {
       toast.error('Signup failed', {
         description: error.message
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -175,10 +191,15 @@ const TenantSignup = () => {
                     value={field.value}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose your society" />
+                      <SelectValue placeholder={loading ? "Loading societies..." : "Choose your society"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {societies.length > 0 ? (
+                      {loading ? (
+                        <div className="flex items-center justify-center p-2">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <span>Loading...</span>
+                        </div>
+                      ) : societies && societies.length > 0 ? (
                         societies.map((society) => (
                           <SelectItem 
                             key={society.id} 
@@ -203,8 +224,19 @@ const TenantSignup = () => {
               )}
             </div>
 
-            <Button type="submit" className="w-full">
-              Create Account
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </Button>
 
             <div className="text-center">

@@ -12,13 +12,31 @@ export const useSocietySelection = () => {
   const fetchSocieties = async () => {
     try {
       setLoading(true);
-      // Use the security definer function we created to avoid recursion issues
-      const { data, error } = await supabase
+      
+      // First try to use the RPC function
+      const { data: rpcData, error: rpcError } = await supabase
         .rpc('get_societies');
       
-      if (error) throw error;
-      setSocieties(data || []);
-      return data;
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        console.log('Societies fetched via RPC:', rpcData);
+        setSocieties(rpcData);
+        return rpcData;
+      }
+      
+      // If RPC fails or returns empty, fallback to direct query
+      if (rpcError) {
+        console.warn('RPC error, falling back to direct query:', rpcError);
+      }
+      
+      const { data: directData, error: directError } = await supabase
+        .from('societies')
+        .select('*');
+      
+      if (directError) throw directError;
+      
+      console.log('Societies fetched via direct query:', directData);
+      setSocieties(directData || []);
+      return directData;
     } catch (error: any) {
       console.error('Error fetching societies:', error);
       toast.error('Error fetching societies', {
