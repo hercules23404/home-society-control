@@ -71,7 +71,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     console.log('Setting up auth state listener');
-    setLoading(true);
     
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -82,32 +81,52 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
+          const userId = currentSession.user.id;
+          console.log("User authenticated:", userId);
+          
           try {
+            // Use setTimeout to prevent blocking the auth state change
             setTimeout(async () => {
-              const profile = await fetchUserProfile(currentSession.user.id);
-              if (profile) {
-                setUserRole(profile.role);
-                if (event === 'SIGNED_IN') {
-                  handleRoleBasedRedirection(profile.role);
+              try {
+                const profile = await fetchUserProfile(userId);
+                if (profile) {
+                  console.log("User profile loaded:", profile.role);
+                  setUserRole(profile.role);
+                  if (event === 'SIGNED_IN') {
+                    handleRoleBasedRedirection(profile.role);
+                  }
+                } else {
+                  console.log("No user profile found");
                 }
+              } catch (profileError) {
+                console.error("Error fetching profile in timeout:", profileError);
+              } finally {
+                // Always ensure loading is set to false
+                setLoading(false);
               }
-              setLoading(false);
             }, 0);
           } catch (error) {
             console.error('Error in auth state change handler:', error);
             setLoading(false);
           }
         } else {
+          console.log("No authenticated user");
           setUserRole(null);
           setLoading(false);
         }
       }
     );
 
-    // Then check for existing session
+    // Then check for existing session - with a timeout to ensure it completes
+    const initializeTimeout = setTimeout(() => {
+      setLoading(false); // Ensure loading is set to false after timeout
+      console.log("Auth initialization timed out, setting loading to false");
+    }, 5000); // 5 second timeout
+    
     const initializeAuth = async () => {
       try {
         console.log('Initializing auth...');
+        
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         console.log('Initial session:', initialSession ? 'exists' : 'none');
@@ -115,6 +134,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (error) {
           console.error('Error getting session:', error);
           setLoading(false);
+          clearTimeout(initializeTimeout);
           return;
         }
         
@@ -125,17 +145,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           try {
             const profile = await fetchUserProfile(initialSession.user.id);
             if (profile) {
+              console.log("Setting user role:", profile.role);
               setUserRole(profile.role);
+            } else {
+              console.log("No profile found for user");
             }
           } catch (profileError) {
             console.error('Error fetching profile during init:', profileError);
           }
+        } else {
+          console.log("No initial session found");
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        // Always ensure loading is set to false
+        // Always ensure loading is set to false and clear timeout
         setLoading(false);
+        clearTimeout(initializeTimeout);
       }
     };
 
@@ -143,6 +169,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     return () => {
       subscription.unsubscribe();
+      clearTimeout(initializeTimeout);
     };
   }, [navigate]);
 
@@ -183,6 +210,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setLoading(true);
       
+      console.log("Signing up user:", email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -198,11 +226,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       if (!data.user) {
+        console.error('User object missing after signup');
         toast.error('Signup failed', { description: 'User could not be created' });
         return { success: false, error: 'User could not be created' };
       }
 
-      console.log('Sign up successful');
+      console.log('Sign up successful, user ID:', data.user.id);
       toast.success('Sign up successful');
       
       return { success: true, userId: data.user.id };
@@ -255,19 +284,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const contextValue = {
+    user,
+    session,
+    userRole,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+    updateUserData,
+  };
+
+  console.log("Auth provider state:", { 
+    hasUser: !!user, 
+    userRole, 
+    loading 
+  });
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        userRole,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        updateUserData,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

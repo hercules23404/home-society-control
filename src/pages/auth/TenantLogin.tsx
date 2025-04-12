@@ -70,8 +70,13 @@ const TenantLogin = () => {
     }
   };
 
-  // Do not wait for auth loading to render the form if there's no user
+  // Show form if: not currently submitting AND (either not authLoading OR we know there's no user)
+  const shouldShowForm = !isLoading && (!authLoading || user === null);
+  
+  // Only show the auth loader when we're checking a previously logged-in user
   const showAuthLoader = authLoading && user !== null;
+
+  console.log("TenantLogin render state:", { authLoading, isLoading, user: !!user, shouldShowForm, showAuthLoader });
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">

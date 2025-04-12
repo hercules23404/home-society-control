@@ -51,6 +51,9 @@ const AdminSignup = () => {
     }
   }, [userRole, navigate]);
 
+  // Always show form if not redirecting and not submitting
+  const shouldShowForm = !isLoading;
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -124,172 +127,159 @@ const AdminSignup = () => {
     }
   };
 
-  // Don't render form while auth is being checked
-  if (authLoading) {
-    return (
-      <AuthLayout 
-        title="Create Admin Account" 
-        subtitle="Set up your account to manage your society"
-        userType="admin"
-      >
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />
-          <span className="sr-only">Loading authentication...</span>
-        </div>
-      </AuthLayout>
-    );
-  }
-
   return (
     <AuthLayout 
       title="Create Admin Account" 
       subtitle="Set up your account to manage your society"
       userType="admin"
     >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter your full name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="your.email@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter your phone number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="designation"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Designation</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Society Secretary" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      {/* Show spinner only when submitting the form, not during auth check */}
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />
+          <span className="sr-only">Creating account...</span>
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your full name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="your.email@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your phone number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="designation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Designation</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Society Secretary" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      {...field}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                      <span className="sr-only">
-                        {showPassword ? "Hide password" : "Show password"}
-                      </span>
-                    </Button>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      {...field}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                      <span className="sr-only">
-                        {showConfirmPassword ? "Hide password" : "Show password"}
-                      </span>
-                    </Button>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <Button 
-            type="submit" 
-            className="w-full bg-rental-primary hover:bg-rental-secondary"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <div className="flex items-center">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span>Creating Account...</span>
-              </div>
-            ) : "Sign Up"}
-          </Button>
-        </form>
-      </Form>
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                        <span className="sr-only">
+                          {showPassword ? "Hide password" : "Show password"}
+                        </span>
+                      </Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                        <span className="sr-only">
+                          {showConfirmPassword ? "Hide password" : "Show password"}
+                        </span>
+                      </Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-rental-primary hover:bg-rental-secondary"
+              disabled={isLoading}
+            >
+              Sign Up
+            </Button>
+          </form>
+        </Form>
+      )}
       
       <div className="mt-4 text-center">
         <p className="text-sm text-rental-text-light">

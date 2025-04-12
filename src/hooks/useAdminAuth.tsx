@@ -32,7 +32,17 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     try {
       console.log('Refreshing admin user...');
+      
+      // Add a timeout to ensure we don't get stuck in loading
+      const timeoutId = setTimeout(() => {
+        console.log("Admin auth refresh timed out, setting loading to false");
+        setLoading(false);
+      }, 5000);
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      // Clear timeout since we got a response
+      clearTimeout(timeoutId);
       
       if (userError) {
         console.error('Error getting user:', userError);
@@ -44,6 +54,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (!user) {
+        console.log("No user found in admin auth refresh");
         setUser(null);
         setIsAdmin(false);
         setSociety(null);
@@ -66,6 +77,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAdmin(false);
           setSociety(null);
         } else {
+          console.log("User is admin with society:", adminData.society?.name);
           setIsAdmin(true);
           setSociety(adminData.society);
         }
@@ -85,6 +97,12 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.log("Admin auth initialization timed out, setting loading to false");
+      setLoading(false);
+    }, 5000);
+    
     refreshUser();
 
     // Set up auth subscription
@@ -99,6 +117,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => {
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
@@ -119,6 +138,13 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     }
   };
+
+  console.log("Admin auth provider state:", { 
+    hasUser: !!user, 
+    isAdmin, 
+    hasSociety: !!society, 
+    loading 
+  });
 
   return (
     <AdminAuthContext.Provider value={{ user, isAdmin, loading, society, signOut, refreshUser }}>
