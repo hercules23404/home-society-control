@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,7 +51,6 @@ const TenantSignup = () => {
 
   const onSubmit = async (data: z.infer<typeof signupSchema>) => {
     try {
-      // Sign up user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password
@@ -60,7 +58,6 @@ const TenantSignup = () => {
 
       if (authError) throw authError;
 
-      // Update profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -72,7 +69,6 @@ const TenantSignup = () => {
 
       if (profileError) throw profileError;
 
-      // Assign to society
       const { error: tenantError } = await supabase
         .from('tenants')
         .insert({
@@ -171,14 +167,20 @@ const TenantSignup = () => {
                       <SelectValue placeholder="Choose your society" />
                     </SelectTrigger>
                     <SelectContent>
-                      {societies.map((society) => (
-                        <SelectItem 
-                          key={society.id} 
-                          value={society.id}
-                        >
-                          {society.name} - {society.city}, {society.state}
+                      {societies.length > 0 ? (
+                        societies.map((society) => (
+                          <SelectItem 
+                            key={society.id} 
+                            value={society.id}
+                          >
+                            {society.name} - {society.city}, {society.state}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="none" disabled>
+                          No societies available
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                 )}

@@ -65,7 +65,7 @@ const TenantLogin = () => {
 
       if (tenantError) {
         toast.error('You are not assigned to a society', {
-          description: 'Please contact your society admin.'
+          description: 'Please contact your society admin or sign up again.'
         });
         await supabase.auth.signOut();
         return;

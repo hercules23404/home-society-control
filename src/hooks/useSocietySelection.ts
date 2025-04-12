@@ -10,6 +10,7 @@ export const useSocietySelection = () => {
 
   const fetchSocieties = async () => {
     try {
+      // Fetch all societies without any restrictions
       const { data, error } = await supabase
         .from('societies')
         .select('id, name, address, city, state');
