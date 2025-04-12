@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -22,17 +23,17 @@ const formSchema = z.object({
   address: z.string().min(5, "Address must be at least 5 characters"),
   city: z.string().min(2, "City must be at least 2 characters"),
   state: z.string().min(2, "State must be at least 2 characters"),
-  pincode: z.string().min(6, "Pincode must be at least 6 characters"),
-  total_flats: z.string().refine((value) => {
+  zip_code: z.string().min(6, "Zip code must be at least 6 characters"),
+  total_units: z.string().refine((value) => {
     const num = Number(value);
     return !isNaN(num) && num > 0;
   }, {
-    message: "Total flats must be a valid number greater than 0",
+    message: "Total units must be a valid number greater than 0",
   }),
   description: z.string().optional(),
 });
 
-type FormData = z.infer<typeof formSchema>;
+export type SocietyFormData = z.infer<typeof formSchema>;
 
 export interface SocietyFormProps {
   onSocietyCreated?: (societyId: string) => void;
@@ -42,37 +43,34 @@ export const SocietyForm = ({ onSocietyCreated }: SocietyFormProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<FormData>({
+  const form = useForm<SocietyFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       address: "",
       city: "",
       state: "",
-      pincode: "",
-      total_flats: "",
+      zip_code: "",
+      total_units: "",
       description: "",
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: SocietyFormData) => {
     setIsLoading(true);
     
     try {
       const { data: societyData, error: societyError } = await supabase
         .from('societies')
-        .insert([
-          {
-            name: data.name,
-            address: data.address,
-            city: data.city,
-            state: data.state,
-            pincode: data.pincode,
-            total_flats: parseInt(data.total_flats),
-            description: data.description,
-            // admin_id will be updated via trigger
-          }
-        ])
+        .insert({
+          name: data.name,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          zip_code: data.zip_code,
+          total_units: parseInt(data.total_units),
+          description: data.description,
+        })
         .select()
         .single();
 
@@ -156,12 +154,12 @@ export const SocietyForm = ({ onSocietyCreated }: SocietyFormProps) => {
         
         <FormField
           control={form.control}
-          name="pincode"
+          name="zip_code"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Pincode</FormLabel>
+              <FormLabel>Zip Code</FormLabel>
               <FormControl>
-                <Input placeholder="Enter pincode" {...field} />
+                <Input placeholder="Enter zip code" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -170,12 +168,12 @@ export const SocietyForm = ({ onSocietyCreated }: SocietyFormProps) => {
         
         <FormField
           control={form.control}
-          name="total_flats"
+          name="total_units"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Total Flats</FormLabel>
+              <FormLabel>Total Units</FormLabel>
               <FormControl>
-                <Input placeholder="Enter total number of flats" {...field} />
+                <Input placeholder="Enter total number of units" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

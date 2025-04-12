@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,15 +43,53 @@ const AdminLogin = () => {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     
-    // This is where you'd connect to Supabase for authentication
-    // For now, we'll simulate a successful login
-    setTimeout(() => {
-      console.log("Admin login details:", data);
+    try {
+      // Sign in with Supabase Auth
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) throw error;
+
+      // Check if user is an admin
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profileData.role !== 'admin') {
+        throw new Error('This account does not have admin privileges');
+      }
+
+      // Check if user is associated with a society
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('user_id', authData.user.id);
+
+      if (adminError) throw adminError;
+
       toast.success("Login successful!");
-      localStorage.setItem("userRole", "admin");
-      navigate("/admin/dashboard");
+      
+      if (adminData && adminData.length > 0) {
+        // Admin is associated with a society, redirect to dashboard
+        navigate("/admin/dashboard");
+      } else {
+        // Admin needs to create or join a society
+        navigate("/admin/create-society");
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error("Login failed", {
+        description: error.message
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -128,6 +167,15 @@ const AdminLogin = () => {
             Sign up as Admin
           </Link>
         </p>
+      </div>
+      
+      {/* Test User Credentials */}
+      <div className="mt-6 p-4 bg-gray-50 rounded-md border border-gray-100">
+        <h3 className="text-sm font-medium mb-2">Test User:</h3>
+        <div className="text-xs text-gray-600 space-y-1">
+          <p>Email: admin@example.com</p>
+          <p>Password: password123</p>
+        </div>
       </div>
     </AuthLayout>
   );

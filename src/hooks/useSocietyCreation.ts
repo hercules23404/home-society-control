@@ -29,8 +29,8 @@ export const useSocietyCreation = () => {
           address: data.address,
           city: data.city,
           state: data.state,
-          zip_code: data.pincode,
-          total_units: parseInt(data.totalFlats),
+          zip_code: data.zip_code,
+          total_units: parseInt(data.total_units),
           amenities: amenities,
         })
         .select()
