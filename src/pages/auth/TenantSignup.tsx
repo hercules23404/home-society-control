@@ -23,6 +23,7 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import { useSocietySelection } from '@/hooks/useSocietySelection';
 import { Link, useNavigate } from 'react-router-dom';
+import { Home } from 'lucide-react';
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -90,7 +91,17 @@ const TenantSignup = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md relative">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute top-4 right-4"
+          onClick={() => navigate('/')}
+        >
+          <Home className="h-6 w-6" />
+          <span className="sr-only">Return to Home</span>
+        </Button>
+
         <CardHeader>
           <CardTitle>Tenant Signup</CardTitle>
           <CardDescription>
