@@ -13,13 +13,17 @@ const AdminRouteProtection = ({ children }: AdminRouteProps) => {
   const { user, isAdmin, loading } = useAdminAuth();
 
   useEffect(() => {
-    // Show error toast only once when redirecting from protected route
-    if (!loading && !user) {
+    // Check if we're on the create-society page and coming from signup
+    const isCreateSocietyPage = location.pathname === '/admin/create-society';
+    const hasSignupState = location.state && (location.state as any).userId;
+    
+    // Only show error toast when not in the create-society flow
+    if (!loading && !user && !isCreateSocietyPage) {
       toast.error('Please sign in to access this page');
-    } else if (!loading && user && !isAdmin) {
+    } else if (!loading && user && !isAdmin && !isCreateSocietyPage && !hasSignupState) {
       toast.error('You do not have admin privileges');
     }
-  }, [loading, user, isAdmin]);
+  }, [loading, user, isAdmin, location]);
 
   if (loading) {
     return (
@@ -29,6 +33,11 @@ const AdminRouteProtection = ({ children }: AdminRouteProps) => {
     );
   }
 
+  // Special case for the create-society page during signup flow
+  if (location.pathname === '/admin/create-society' && location.state && (location.state as any).userId) {
+    return <>{children}</>;
+  }
+  
   if (!user) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }

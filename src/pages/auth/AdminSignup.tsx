@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
@@ -85,18 +84,15 @@ const AdminSignup = () => {
 
       if (profileError) throw profileError;
 
-      // Step 3: Create the admin record
-      const { error: adminError } = await supabase
-        .from('admins')
-        .insert({
-          user_id: authData.user.id,
-          designation: data.designation,
-        });
-
-      if (adminError) throw adminError;
+      // Step 3: After successful signup, we'll redirect to create-society page
+      // The admin record will be created after society creation
+      // This avoids the society_id requirement issue
 
       toast.success("Registration successful!");
-      navigate("/admin/create-society");
+      navigate("/admin/create-society", { state: { 
+        userId: authData.user.id,
+        designation: data.designation
+      }});
     } catch (error: any) {
       console.error("Registration error:", error);
       toast.error("Registration failed", {
