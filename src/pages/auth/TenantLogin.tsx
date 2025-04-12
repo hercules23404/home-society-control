@@ -16,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
+import { Home } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -82,6 +83,16 @@ const TenantLogin = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
+      <div className="absolute top-4 left-4">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate('/')}
+          aria-label="Return to home"
+        >
+          <Home className="h-5 w-5" />
+        </Button>
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Tenant Login</CardTitle>
