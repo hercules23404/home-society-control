@@ -1,6 +1,6 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -28,6 +28,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [society, setSociety] = useState<any | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const refreshUser = async () => {
     try {
@@ -64,16 +65,33 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(user);
 
+      // Check if we're on the create-society page from signup flow
+      // If so, we skip the admin check as the user is in the process of becoming an admin
+      const isCreateSocietyPage = location.pathname === '/admin/create-society';
+      const isFromSignup = location.state && 
+        ((location.state as any).userId || (location.state as any).fromSignup);
+      
+      if (isCreateSocietyPage && isFromSignup) {
+        console.log("User is in society creation flow, skipping admin check");
+        setIsAdmin(true); // Temporarily set as admin for this flow
+        setLoading(false);
+        return;
+      }
+
       // Check if user is an admin
       try {
         const { data: adminData, error: adminError } = await supabase
           .from('admins')
           .select('*, society:societies(*)')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (adminError || !adminData) {
-          console.log('Not an admin or error fetching admin data:', adminError);
+        if (adminError) {
+          console.error('Error checking admin status:', adminError);
+          setIsAdmin(false);
+          setSociety(null);
+        } else if (!adminData) {
+          console.log('Not an admin');
           setIsAdmin(false);
           setSociety(null);
         } else {
@@ -120,7 +138,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [location.pathname]); // Re-run when path changes to handle navigation between routes properly
 
   const signOut = async () => {
     try {
@@ -143,7 +161,10 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     hasUser: !!user, 
     isAdmin, 
     hasSociety: !!society, 
-    loading 
+    loading,
+    pathname: location.pathname,
+    isCreateSocietyPage: location.pathname === '/admin/create-society',
+    hasSignupState: !!location.state && ((location.state as any).userId || (location.state as any).fromSignup)
   });
 
   return (

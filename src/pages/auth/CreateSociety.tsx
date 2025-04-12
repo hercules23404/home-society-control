@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 interface LocationState {
   userId?: string;
   designation?: string;
+  fromSignup?: boolean;
 }
 
 const CreateSociety = () => {
@@ -31,13 +32,18 @@ const CreateSociety = () => {
     }
   }, [location.state]);
 
-  // Redirect if user is not an admin
+  // Redirect if user is not an admin and not in signup flow
   useEffect(() => {
-    if (!authLoading && userRole && userRole !== 'admin') {
-      toast.error("Access denied. You must be an admin to create a society.");
-      navigate("/");
+    if (!authLoading) {
+      // Allow access if coming from signup flow (state.fromSignup or state.userId exists)
+      const isFromSignup = state.fromSignup || state.userId;
+      
+      if (!isFromSignup && userRole && userRole !== 'admin') {
+        toast.error("Access denied. You must be an admin to create a society.");
+        navigate("/");
+      }
     }
-  }, [userRole, navigate, authLoading]);
+  }, [userRole, navigate, authLoading, state]);
 
   // Create admin handler to be passed to SocietyForm
   const handleSocietyCreated = async (societyId: string) => {
@@ -68,6 +74,11 @@ const CreateSociety = () => {
         if (error) throw error;
         
         toast.success("Society and admin setup complete!");
+        
+        // Refresh the session to make sure all changes are reflected
+        await supabase.auth.refreshSession();
+        
+        // Navigate to dashboard with replace to prevent going back to create society
         navigate("/admin/dashboard", { replace: true });
       } else {
         console.error("Missing required user information for admin setup");
@@ -85,7 +96,7 @@ const CreateSociety = () => {
     }
   };
 
-  if (authLoading) {
+  if (authLoading && !state.fromSignup && !state.userId) {
     return (
       <AuthLayout 
         title="Create Your Society" 

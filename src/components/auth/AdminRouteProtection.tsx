@@ -15,7 +15,8 @@ const AdminRouteProtection = ({ children }: AdminRouteProps) => {
   useEffect(() => {
     // Check if we're on the create-society page and coming from signup
     const isCreateSocietyPage = location.pathname === '/admin/create-society';
-    const hasSignupState = location.state && (location.state as any).userId;
+    const hasSignupState = location.state && 
+      ((location.state as any).userId || (location.state as any).fromSignup);
     
     // Only show error toast when not in the create-society flow
     if (!loading && !user && !isCreateSocietyPage) {
@@ -34,7 +35,9 @@ const AdminRouteProtection = ({ children }: AdminRouteProps) => {
   }
 
   // Special case for the create-society page during signup flow
-  if (location.pathname === '/admin/create-society' && location.state && (location.state as any).userId) {
+  if (location.pathname === '/admin/create-society' && 
+      location.state && 
+      ((location.state as any).userId || (location.state as any).fromSignup)) {
     return <>{children}</>;
   }
   

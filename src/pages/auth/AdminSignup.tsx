@@ -42,14 +42,16 @@ const AdminSignup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect based on role
+  // Redirect based on role - only if not in the process of loading or submitting
   useEffect(() => {
-    if (userRole === 'admin') {
-      navigate("/admin/dashboard", { replace: true });
-    } else if (userRole === 'tenant') {
-      navigate("/tenant/dashboard", { replace: true });
+    if (!isLoading && !authLoading) {
+      if (userRole === 'admin') {
+        navigate("/admin/dashboard", { replace: true });
+      } else if (userRole === 'tenant') {
+        navigate("/tenant/dashboard", { replace: true });
+      }
     }
-  }, [userRole, navigate]);
+  }, [userRole, navigate, isLoading, authLoading]);
 
   // Always show form if not redirecting and not submitting
   const shouldShowForm = !isLoading;
@@ -106,13 +108,24 @@ const AdminSignup = () => {
       }
 
       console.log("Profile updated successfully");
+      
+      // Step 3: Get the latest session to ensure we have the current auth state
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Error retrieving session:", sessionError);
+        throw sessionError;
+      }
+      
+      console.log("Session retrieved:", sessionData.session ? "Valid" : "None");
       toast.success("Registration successful!");
       
       // Navigate to society creation with user data
       navigate("/admin/create-society", { 
         state: { 
           userId,
-          designation: data.designation
+          designation: data.designation,
+          fromSignup: true // Flag to indicate this is coming from signup flow
         },
         replace: true
       });
