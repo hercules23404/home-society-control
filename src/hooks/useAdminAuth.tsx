@@ -31,34 +31,54 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshUser = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Refreshing admin user...');
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error getting user:', userError);
+        setUser(null);
+        setIsAdmin(false);
+        setSociety(null);
+        setLoading(false);
+        return;
+      }
+      
       if (!user) {
         setUser(null);
         setIsAdmin(false);
         setSociety(null);
+        setLoading(false);
         return;
       }
 
       setUser(user);
 
       // Check if user is an admin
-      const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select('*, society:societies(*)')
-        .eq('user_id', user.id)
-        .single();
+      try {
+        const { data: adminData, error: adminError } = await supabase
+          .from('admins')
+          .select('*, society:societies(*)')
+          .eq('user_id', user.id)
+          .single();
 
-      if (adminError || !adminData) {
-        console.log('Not an admin or error fetching admin data:', adminError);
+        if (adminError || !adminData) {
+          console.log('Not an admin or error fetching admin data:', adminError);
+          setIsAdmin(false);
+          setSociety(null);
+        } else {
+          setIsAdmin(true);
+          setSociety(adminData.society);
+        }
+      } catch (adminCheckError) {
+        console.error('Error checking admin status:', adminCheckError);
         setIsAdmin(false);
         setSociety(null);
-        return;
       }
-
-      setIsAdmin(true);
-      setSociety(adminData.society);
     } catch (error) {
       console.error('Error refreshing user:', error);
+      setUser(null);
+      setIsAdmin(false);
+      setSociety(null);
     } finally {
       setLoading(false);
     }
@@ -68,8 +88,14 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     refreshUser();
 
     // Set up auth subscription
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async () => {
-      await refreshUser();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      console.log('Admin auth state changed:', event);
+      try {
+        await refreshUser();
+      } catch (error) {
+        console.error('Error in admin auth state change handler:', error);
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -78,12 +104,20 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setIsAdmin(false);
-    setSociety(null);
-    navigate('/admin/login');
-    toast.success('Signed out successfully');
+    try {
+      setLoading(true);
+      await supabase.auth.signOut();
+      setUser(null);
+      setIsAdmin(false);
+      setSociety(null);
+      navigate('/admin/login');
+      toast.success('Signed out successfully');
+    } catch (error) {
+      console.error('Admin sign out error:', error);
+      toast.error('Sign out failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

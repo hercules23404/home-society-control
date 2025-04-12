@@ -25,18 +25,18 @@ const loginSchema = z.object({
 
 const TenantLogin = () => {
   const navigate = useNavigate();
-  const { signIn, userRole, loading: authLoading } = useAuth();
+  const { signIn, user, userRole, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect when userRole changes
   useEffect(() => {
-    if (userRole === 'tenant') {
+    if (user && userRole === 'tenant') {
       navigate('/tenant/dashboard', { replace: true });
-    } else if (userRole === 'admin') {
+    } else if (user && userRole === 'admin') {
       // If an admin tries to access tenant login, redirect them
       navigate('/admin/dashboard', { replace: true });
     }
-  }, [userRole, navigate]);
+  }, [user, userRole, navigate]);
 
   const { 
     register, 
@@ -70,6 +70,9 @@ const TenantLogin = () => {
     }
   };
 
+  // Do not wait for auth loading to render the form if there's no user
+  const showAuthLoader = authLoading && user !== null;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
       <div className="absolute top-4 left-4">
@@ -90,7 +93,7 @@ const TenantLogin = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {authLoading ? (
+          {showAuthLoader ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />
               <span className="sr-only">Loading...</span>
