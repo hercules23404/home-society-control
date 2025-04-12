@@ -21,6 +21,12 @@ import TenantDashboard from "./pages/tenant/Dashboard";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
+import TenantsPage from "./pages/admin/Tenants";
+import RequestsPage from "./pages/admin/Requests";
+import NoticesPage from "./pages/admin/Notices";
+import PropertiesPage from "./pages/admin/Properties";
+import DocumentsPage from "./pages/admin/Documents";
+import SocietyPage from "./pages/admin/Society";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +52,12 @@ const App = () => (
           
           {/* Admin routes */}
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/tenants" element={<TenantsPage />} />
+          <Route path="/admin/requests" element={<RequestsPage />} />
+          <Route path="/admin/notices" element={<NoticesPage />} />
+          <Route path="/admin/properties" element={<PropertiesPage />} />
+          <Route path="/admin/documents" element={<DocumentsPage />} />
+          <Route path="/admin/society" element={<SocietyPage />} />
           
           {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
