@@ -50,10 +50,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Database } from "@/integrations/supabase/types";
+
+type PropertyType = Database["public"]["Enums"]["property_type"];
+type PropertyStatus = Database["public"]["Enums"]["property_status_type"];
 
 type Property = {
   id: string;
-  property_type: '1BHK' | '2BHK' | '3BHK' | '4BHK' | 'penthouse' | 'studio';
+  property_type: PropertyType;
   bedrooms: number;
   bathrooms: number;
   area_sqft: number;
@@ -63,7 +67,7 @@ type Property = {
   state: string;
   zip_code: string;
   description?: string;
-  status: 'vacant' | 'occupied' | 'under_renovation';
+  status: PropertyStatus;
   amenities?: string[];
   photos?: string[];
   society_id: string;
@@ -78,7 +82,7 @@ const PropertiesPage = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
 
-  const [propertyType, setPropertyType] = useState<'1BHK' | '2BHK' | '3BHK' | '4BHK' | 'penthouse' | 'studio'>('2BHK');
+  const [propertyType, setPropertyType] = useState<PropertyType>("2BHK");
   const [bedrooms, setBedrooms] = useState(2);
   const [bathrooms, setBathrooms] = useState(2);
   const [area, setArea] = useState(1200);
@@ -88,7 +92,7 @@ const PropertiesPage = () => {
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<'vacant' | 'occupied' | 'under_renovation'>('vacant');
+  const [status, setStatus] = useState<PropertyStatus>("vacant");
   const [amenitiesInput, setAmenitiesInput] = useState("");
   const [amenities, setAmenities] = useState<string[]>(["Balcony", "Reserved Parking"]);
 
@@ -115,7 +119,7 @@ const PropertiesPage = () => {
   });
 
   const createPropertyMutation = useMutation({
-    mutationFn: async (newProperty: Omit<Property, 'id' | 'created_at'>) => {
+    mutationFn: async (newProperty: Omit<Property, "id" | "created_at">) => {
       const { data, error } = await supabase
         .from('properties')
         .insert(newProperty)
@@ -406,7 +410,7 @@ const PropertiesPage = () => {
                     <Label htmlFor="property-type">Property Type</Label>
                     <Select
                       value={propertyType}
-                      onValueChange={(value) => setPropertyType(value as any)}
+                      onValueChange={(value) => setPropertyType(value as PropertyType)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
@@ -416,8 +420,9 @@ const PropertiesPage = () => {
                         <SelectItem value="2BHK">2 BHK</SelectItem>
                         <SelectItem value="3BHK">3 BHK</SelectItem>
                         <SelectItem value="4BHK">4 BHK</SelectItem>
-                        <SelectItem value="penthouse">Penthouse</SelectItem>
                         <SelectItem value="studio">Studio</SelectItem>
+                        <SelectItem value="villa">Villa</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -425,7 +430,7 @@ const PropertiesPage = () => {
                     <Label htmlFor="status">Status</Label>
                     <Select
                       value={status}
-                      onValueChange={(value) => setStatus(value as any)}
+                      onValueChange={(value) => setStatus(value as PropertyStatus)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
@@ -433,7 +438,7 @@ const PropertiesPage = () => {
                       <SelectContent>
                         <SelectItem value="vacant">Vacant</SelectItem>
                         <SelectItem value="occupied">Occupied</SelectItem>
-                        <SelectItem value="under_renovation">Under Renovation</SelectItem>
+                        <SelectItem value="under_maintenance">Under Renovation</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -611,7 +616,7 @@ const PropertiesPage = () => {
                     <Label htmlFor="edit-property-type">Property Type</Label>
                     <Select
                       value={propertyType}
-                      onValueChange={(value) => setPropertyType(value as any)}
+                      onValueChange={(value) => setPropertyType(value as PropertyType)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
@@ -621,8 +626,9 @@ const PropertiesPage = () => {
                         <SelectItem value="2BHK">2 BHK</SelectItem>
                         <SelectItem value="3BHK">3 BHK</SelectItem>
                         <SelectItem value="4BHK">4 BHK</SelectItem>
-                        <SelectItem value="penthouse">Penthouse</SelectItem>
                         <SelectItem value="studio">Studio</SelectItem>
+                        <SelectItem value="villa">Villa</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -630,7 +636,7 @@ const PropertiesPage = () => {
                     <Label htmlFor="edit-status">Status</Label>
                     <Select
                       value={status}
-                      onValueChange={(value) => setStatus(value as any)}
+                      onValueChange={(value) => setStatus(value as PropertyStatus)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
@@ -638,7 +644,7 @@ const PropertiesPage = () => {
                       <SelectContent>
                         <SelectItem value="vacant">Vacant</SelectItem>
                         <SelectItem value="occupied">Occupied</SelectItem>
-                        <SelectItem value="under_renovation">Under Renovation</SelectItem>
+                        <SelectItem value="under_maintenance">Under Renovation</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
