@@ -1,8 +1,56 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Search,
+  PlusCircle,
+  Home,
+  User,
+  Building,
+  BedDouble,
+  Bath,
+  MapPin,
+  Check,
+  X,
+  Filter,
+  Edit,
+  Loader2,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Database } from "@/integrations/supabase/types";
 
 type PropertyStatus = Database["public"]["Enums"]["property_status_type"];
@@ -251,6 +299,15 @@ const PropertiesPage = () => {
       else if (currentTab === "vacant") return property.status === 'vacant';
       else if (currentTab === "under_maintenance") return property.status === 'under_maintenance';
       return true;
+    })
+    .filter(property => {
+      const searchText = searchTerm.toLowerCase();
+      return (
+        property.address.toLowerCase().includes(searchText) ||
+        property.property_type.toLowerCase().includes(searchText) ||
+        property.city.toLowerCase().includes(searchText) ||
+        property.state.toLowerCase().includes(searchText)
+      );
     });
 
   const getOccupancyBadge = (status: PropertyStatus) => {
