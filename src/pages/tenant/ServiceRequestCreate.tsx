@@ -39,6 +39,9 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
 
+// Define the maintenance status type to match Supabase's enum
+type MaintenanceStatusType = "pending" | "in_progress" | "completed" | "rejected";
+
 const requestFormSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
@@ -146,7 +149,7 @@ const TenantServiceRequestCreate = () => {
         throw new Error('User not authenticated');
       }
       
-      // Prepare the request data
+      // Prepare the request data with the properly typed status
       const requestData = {
         tenant_id: user.id,
         society_id: society?.id,
@@ -154,7 +157,7 @@ const TenantServiceRequestCreate = () => {
         description: values.description,
         issue_type: values.issue_type,
         photos: values.photos || [],
-        status: 'pending',
+        status: "pending" as MaintenanceStatusType, // Use type assertion for the enum value
       };
       
       // Insert into maintenance_requests table

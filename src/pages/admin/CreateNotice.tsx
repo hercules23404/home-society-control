@@ -39,10 +39,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 
+// Define the notice type as a specific union type to match Supabase's enum
+type NoticeType = "general" | "maintenance" | "events" | "emergency";
+
 const noticeFormSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   content: z.string().min(20, "Content must be at least 20 characters"),
-  notice_type: z.string().min(1, "Please select a notice type"),
+  notice_type: z.enum(["general", "maintenance", "events", "emergency"]),
   is_pinned: z.boolean().default(false),
 });
 
@@ -65,7 +68,7 @@ const AdminCreateNotice = () => {
     defaultValues: {
       title: "",
       content: "",
-      notice_type: "",
+      notice_type: "general",
       is_pinned: false,
     },
   });
@@ -78,12 +81,12 @@ const AdminCreateNotice = () => {
         throw new Error('User not authenticated');
       }
       
-      // Prepare the notice data
+      // Prepare the notice data with the proper typed notice_type
       const noticeData = {
         society_id: society?.id,
         title: values.title,
         content: values.content,
-        notice_type: values.notice_type,
+        notice_type: values.notice_type as NoticeType, // Cast to ensure it's the correct type
         is_pinned: values.is_pinned,
         is_admin_post: true,
         user_id: user.id,
