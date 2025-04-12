@@ -3,57 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Search,
-  PlusCircle,
-  Home,
-  User,
-  Building,
-  BedDouble,
-  Bath,
-  MapPin,
-  Check,
-  X,
-  Filter,
-  Edit,
-  Loader2,
-  Trash2,
-} from "lucide-react";
-import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Database } from "@/integrations/supabase/types";
 
-type PropertyType = Database["public"]["Enums"]["property_type"];
 type PropertyStatus = Database["public"]["Enums"]["property_status_type"];
+type PropertyType = Database["public"]["Enums"]["property_type"];
 
 type Property = {
   id: string;
@@ -92,7 +45,7 @@ const PropertiesPage = () => {
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<PropertyStatus>("vacant");
+  const [status, setStatus] = useState<PropertyStatus>('vacant');
   const [amenitiesInput, setAmenitiesInput] = useState("");
   const [amenities, setAmenities] = useState<string[]>(["Balcony", "Reserved Parking"]);
 
@@ -296,25 +249,16 @@ const PropertiesPage = () => {
       if (currentTab === "all") return true;
       else if (currentTab === "occupied") return property.status === 'occupied';
       else if (currentTab === "vacant") return property.status === 'vacant';
-      else if (currentTab === "under_renovation") return property.status === 'under_renovation';
+      else if (currentTab === "under_maintenance") return property.status === 'under_maintenance';
       return true;
-    })
-    .filter(property => {
-      const searchText = searchTerm.toLowerCase();
-      return (
-        property.address.toLowerCase().includes(searchText) ||
-        property.property_type.toLowerCase().includes(searchText) ||
-        property.city.toLowerCase().includes(searchText) ||
-        property.state.toLowerCase().includes(searchText)
-      );
     });
 
-  const getOccupancyBadge = (status: string) => {
+  const getOccupancyBadge = (status: PropertyStatus) => {
     switch (status) {
       case 'occupied':
         return <Badge className="bg-green-600">Occupied</Badge>;
-      case 'under_renovation':
-        return <Badge variant="outline" className="bg-purple-100 text-purple-800">Under Renovation</Badge>;
+      case 'under_maintenance':
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800">Under Maintenance</Badge>;
       default:
         return <Badge variant="outline" className="bg-amber-100 text-amber-800">Vacant</Badge>;
     }
@@ -384,7 +328,7 @@ const PropertiesPage = () => {
             <TabsTrigger value="all">All Properties</TabsTrigger>
             <TabsTrigger value="occupied">Occupied</TabsTrigger>
             <TabsTrigger value="vacant">Vacant</TabsTrigger>
-            <TabsTrigger value="under_renovation">Under Renovation</TabsTrigger>
+            <TabsTrigger value="under_maintenance">Under Maintenance</TabsTrigger>
           </TabsList>
         </Tabs>
         
@@ -438,7 +382,7 @@ const PropertiesPage = () => {
                       <SelectContent>
                         <SelectItem value="vacant">Vacant</SelectItem>
                         <SelectItem value="occupied">Occupied</SelectItem>
-                        <SelectItem value="under_maintenance">Under Renovation</SelectItem>
+                        <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -644,7 +588,7 @@ const PropertiesPage = () => {
                       <SelectContent>
                         <SelectItem value="vacant">Vacant</SelectItem>
                         <SelectItem value="occupied">Occupied</SelectItem>
-                        <SelectItem value="under_maintenance">Under Renovation</SelectItem>
+                        <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
