@@ -111,7 +111,7 @@ const TenantSignup = () => {
               />
               {errors.firstName && (
                 <p className="text-red-500 text-sm">
-                  {errors.firstName.message}
+                  {errors.firstName.message?.toString()}
                 </p>
               )}
             </div>
@@ -124,7 +124,7 @@ const TenantSignup = () => {
               />
               {errors.lastName && (
                 <p className="text-red-500 text-sm">
-                  {errors.lastName.message}
+                  {errors.lastName.message?.toString()}
                 </p>
               )}
             </div>
@@ -138,7 +138,7 @@ const TenantSignup = () => {
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">
-                  {errors.email.message}
+                  {errors.email.message?.toString()}
                 </p>
               )}
             </div>
@@ -152,7 +152,7 @@ const TenantSignup = () => {
               />
               {errors.password && (
                 <p className="text-red-500 text-sm">
-                  {errors.password.message}
+                  {errors.password.message?.toString()}
                 </p>
               )}
             </div>
@@ -185,7 +185,7 @@ const TenantSignup = () => {
               />
               {errors.societyId && (
                 <p className="text-red-500 text-sm">
-                  {errors.societyId.message}
+                  {errors.societyId.message?.toString()}
                 </p>
               )}
             </div>

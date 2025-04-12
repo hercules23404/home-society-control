@@ -100,7 +100,7 @@ const TenantLogin = () => {
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">
-                  {errors.email.message}
+                  {errors.email.message?.toString()}
                 </p>
               )}
             </div>
@@ -114,7 +114,7 @@ const TenantLogin = () => {
               />
               {errors.password && (
                 <p className="text-red-500 text-sm">
-                  {errors.password.message}
+                  {errors.password.message?.toString()}
                 </p>
               )}
             </div>
