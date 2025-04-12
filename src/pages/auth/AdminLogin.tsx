@@ -44,28 +44,26 @@ const AdminLogin = () => {
     setIsLoading(true);
     
     try {
-      // Sign in with Supabase Auth
+      // Step 1: Sign in with Supabase Auth
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
       if (error) throw error;
-
-      // Check if user is an admin
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (profileData.role !== 'admin') {
+      
+      // Step 2: Use our RPC function for role check instead of direct query
+      // This uses the security definer function we just created
+      const { data: userRole, error: roleError } = await supabase
+        .rpc('get_user_role');
+        
+      if (roleError) throw roleError;
+      
+      if (userRole !== 'admin') {
         throw new Error('This account does not have admin privileges');
       }
 
-      // Check if user is associated with a society
+      // Step 3: Check if user is associated with a society
       const { data: adminData, error: adminError } = await supabase
         .from('admins')
         .select('*')
