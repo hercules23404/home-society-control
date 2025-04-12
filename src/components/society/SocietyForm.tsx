@@ -1,11 +1,11 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,6 @@ export interface SocietyFormProps {
 }
 
 export const SocietyForm = ({ onSocietyCreated }: SocietyFormProps) => {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SocietyFormData>({
@@ -76,13 +75,14 @@ export const SocietyForm = ({ onSocietyCreated }: SocietyFormProps) => {
 
       if (societyError) throw societyError;
 
-      toast.success("Society created successfully!");
+      console.log("Society created successfully:", societyData.id);
       
       if (onSocietyCreated && societyData?.id) {
         onSocietyCreated(societyData.id);
+      } else {
+        toast.success("Society created successfully!");
       }
       
-      navigate("/admin/dashboard");
     } catch (error: any) {
       console.error("Society creation error:", error);
       toast.error("Society creation failed", {
@@ -199,7 +199,12 @@ export const SocietyForm = ({ onSocietyCreated }: SocietyFormProps) => {
           className="w-full bg-rental-primary hover:bg-rental-secondary"
           disabled={isLoading}
         >
-          {isLoading ? "Creating Society..." : "Create Society"}
+          {isLoading ? (
+            <div className="flex items-center">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span>Creating Society...</span>
+            </div>
+          ) : "Create Society"}
         </Button>
       </form>
     </Form>

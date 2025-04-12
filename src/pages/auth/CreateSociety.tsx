@@ -25,6 +25,8 @@ const CreateSociety = () => {
       setState(location.state as LocationState);
     } else {
       console.log("No state received in CreateSociety");
+      // If no state but user is already logged in, we can still create a society
+      // They will just need to manually create an admin record later
     }
   }, [location.state]);
 
