@@ -6,11 +6,13 @@ import { useNavigate } from 'react-router-dom';
 
 export const useSocietySelection = () => {
   const [societies, setSocieties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchSocieties = async () => {
     try {
-      // Fetch all societies without any restrictions
+      setLoading(true);
+      // Fetch all societies without any restrictions - available to all tenants
       const { data, error } = await supabase
         .from('societies')
         .select('id, name, address, city, state');
@@ -19,10 +21,13 @@ export const useSocietySelection = () => {
       setSocieties(data || []);
       return data;
     } catch (error: any) {
+      console.error('Error fetching societies:', error);
       toast.error('Error fetching societies', {
         description: error.message
       });
       return [];
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,6 +52,7 @@ export const useSocietySelection = () => {
       toast.success('Society assigned successfully');
       navigate('/tenant/dashboard');
     } catch (error: any) {
+      console.error('Error assigning society:', error);
       toast.error('Error assigning society', {
         description: error.message
       });
@@ -56,6 +62,7 @@ export const useSocietySelection = () => {
   return { 
     societies, 
     fetchSocieties, 
-    assignTenantToSociety 
+    assignTenantToSociety,
+    loading 
   };
 };
