@@ -1,6 +1,29 @@
 
 import { createContext, useContext, ReactNode } from 'react';
 
+// Detailed mock society data
+const mockSociety = {
+  id: 'test-society-id',
+  name: 'Green Valley Apartments',
+  address: '123 Park Avenue',
+  city: 'Mumbai',
+  state: 'Maharashtra',
+  zip: '400001',
+  total_units: 100,
+  amenities: ['Swimming Pool', 'Gym', 'Community Hall', 'Gardens', 'CCTV Surveillance'],
+  description: 'A premium residential society in the heart of Mumbai'
+};
+
+// Mock admin data
+const mockAdmin = {
+  id: 'test-admin-id', 
+  email: 'admin@example.com',
+  name: 'Rahul Sharma',
+  phone: '+91 98765 43210',
+  role: 'admin',
+  designation: 'Society Manager'
+};
+
 interface AdminAuthContextType {
   user: any | null;
   isAdmin: boolean;
@@ -10,18 +33,8 @@ interface AdminAuthContextType {
   refreshUser: () => Promise<void>;
 }
 
-// Mock society data
-const mockSociety = {
-  id: 'test-society-id',
-  name: 'Test Society',
-  address: '123 Test Street',
-  city: 'Test City',
-  state: 'Test State',
-  zip: '12345',
-};
-
 const AdminAuthContext = createContext<AdminAuthContextType>({
-  user: { id: 'test-admin-id', email: 'admin@example.com' },
+  user: mockAdmin,
   isAdmin: true,
   loading: false,
   society: mockSociety,
@@ -35,7 +48,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {};
 
   const value = {
-    user: { id: 'test-admin-id', email: 'admin@example.com' },
+    user: mockAdmin,
     isAdmin: true,
     loading: false,
     society: mockSociety,

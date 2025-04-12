@@ -20,55 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, UserX, Search, Filter, UserCheck, UserPlus } from "lucide-react";
-
-// Mock data for tenants
-const mockTenants = [
-  {
-    id: "1",
-    name: "Amit Kumar",
-    email: "amit.kumar@example.com",
-    phone: "+91 98765 43210",
-    flat: "A-101",
-    status: "verified",
-    joinedOn: "Mar 15, 2025",
-  },
-  {
-    id: "2",
-    name: "Priya Singh",
-    email: "priya.singh@example.com",
-    phone: "+91 87654 32109",
-    flat: "B-205",
-    status: "pending",
-    joinedOn: "Apr 2, 2025",
-  },
-  {
-    id: "3",
-    name: "Rahul Sharma",
-    email: "rahul.sharma@example.com",
-    phone: "+91 76543 21098",
-    flat: "C-304",
-    status: "verified",
-    joinedOn: "Feb 20, 2025",
-  },
-  {
-    id: "4",
-    name: "Neha Gupta",
-    email: "neha.gupta@example.com",
-    phone: "+91 65432 10987",
-    flat: "D-402",
-    status: "rejected",
-    joinedOn: "Jan 10, 2025",
-  },
-  {
-    id: "5",
-    name: "Vikram Malhotra",
-    email: "vikram.m@example.com",
-    phone: "+91 54321 09876",
-    flat: "E-501",
-    status: "verified",
-    joinedOn: "Mar 5, 2025",
-  },
-];
+import { mockTenants } from "@/utils/mockData";
 
 const TenantsPage = () => {
   const [tenants] = useState(mockTenants);
@@ -79,6 +31,11 @@ const TenantsPage = () => {
     tenant.flat.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tenant.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Count tenants by status
+  const verifiedCount = tenants.filter(tenant => tenant.status === "verified").length;
+  const pendingCount = tenants.filter(tenant => tenant.status === "pending").length;
+  const rejectedCount = tenants.filter(tenant => tenant.status === "rejected").length;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -128,21 +85,21 @@ const TenantsPage = () => {
               <UserCheck className="h-5 w-5" />
               <div>
                 <div className="text-sm font-medium">Verified</div>
-                <div className="text-2xl font-bold">3</div>
+                <div className="text-2xl font-bold">{verifiedCount}</div>
               </div>
             </div>
             <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-md">
               <Clock className="h-5 w-5" />
               <div>
                 <div className="text-sm font-medium">Pending</div>
-                <div className="text-2xl font-bold">1</div>
+                <div className="text-2xl font-bold">{pendingCount}</div>
               </div>
             </div>
             <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-md">
               <UserX className="h-5 w-5" />
               <div>
                 <div className="text-sm font-medium">Rejected</div>
-                <div className="text-2xl font-bold">1</div>
+                <div className="text-2xl font-bold">{rejectedCount}</div>
               </div>
             </div>
           </div>

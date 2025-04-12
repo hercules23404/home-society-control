@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,81 +23,11 @@ import {
 
 import { AmenitiesSection } from "@/components/society/AmenitiesSection";
 import { UtilityWorkersSection } from "@/components/society/UtilityWorkersSection";
-
-// Mock data
-const mockSociety = {
-  id: "1",
-  name: "Green Valley Apartments",
-  address: "123, Green Avenue",
-  city: "Mumbai",
-  state: "Maharashtra",
-  pincode: "400001",
-  email: "admin@greenvalley.com",
-  phone: "+91 98765 43210",
-  totalFlats: 100,
-  occupiedFlats: 85,
-  establishedYear: 2018,
-  registrationNumber: "MHSOC123456",
-  amenities: [
-    "Swimming Pool",
-    "Gym",
-    "Community Hall",
-    "Children's Play Area",
-    "Gardens",
-    "CCTV Surveillance",
-    "24/7 Security",
-    "Power Backup",
-    "Rainwater Harvesting",
-  ],
-  utilityWorkers: [
-    {
-      id: "1",
-      name: "Ramesh Sharma",
-      role: "Security Guard",
-      phone: "+91 87654 32109",
-      shiftTiming: "Morning (6 AM - 2 PM)",
-    },
-    {
-      id: "2",
-      name: "Suresh Kumar",
-      role: "Security Guard",
-      phone: "+91 76543 21098",
-      shiftTiming: "Evening (2 PM - 10 PM)",
-    },
-    {
-      id: "3",
-      name: "Mahesh Patil",
-      role: "Security Guard",
-      phone: "+91 65432 10987",
-      shiftTiming: "Night (10 PM - 6 AM)",
-    },
-    {
-      id: "4",
-      name: "Lakshmi Devi",
-      role: "Housekeeper",
-      phone: "+91 54321 09876",
-      shiftTiming: "Morning (7 AM - 3 PM)",
-    },
-    {
-      id: "5",
-      name: "Ganesh Rao",
-      role: "Plumber",
-      phone: "+91 43210 98765",
-      shiftTiming: "On Call",
-    },
-    {
-      id: "6",
-      name: "Rajesh Kumar",
-      role: "Electrician",
-      phone: "+91 32109 87654",
-      shiftTiming: "On Call",
-    },
-  ],
-};
+import { mockSociety, mockUtilityWorkers } from "@/utils/mockData";
 
 const SocietyPage = () => {
   const [amenities, setAmenities] = useState(mockSociety.amenities);
-  const [utilityWorkers, setUtilityWorkers] = useState(mockSociety.utilityWorkers);
+  const [utilityWorkers, setUtilityWorkers] = useState(mockUtilityWorkers);
 
   return (
     <DashboardLayout role="admin">
@@ -123,7 +52,7 @@ const SocietyPage = () => {
                 <CardTitle className="text-2xl font-bold">{mockSociety.name}</CardTitle>
                 <CardDescription className="flex items-center mt-2">
                   <MapPin className="h-4 w-4 mr-1" />
-                  {mockSociety.address}, {mockSociety.city}, {mockSociety.state} - {mockSociety.pincode}
+                  {mockSociety.address}, {mockSociety.city}, {mockSociety.state} - {mockSociety.zip}
                 </CardDescription>
               </div>
               <Button size="sm" className="bg-rental-primary hover:bg-rental-secondary">
@@ -175,7 +104,7 @@ const SocietyPage = () => {
                   <CardContent>
                     <div className="flex items-center">
                       <Building className="h-5 w-5 mr-2 text-rental-primary" />
-                      <span className="text-2xl font-bold">{mockSociety.totalFlats}</span>
+                      <span className="text-2xl font-bold">{mockSociety.total_units}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -200,7 +129,7 @@ const SocietyPage = () => {
                     <div className="flex items-center">
                       <Home className="h-5 w-5 mr-2 text-amber-500" />
                       <span className="text-2xl font-bold">
-                        {mockSociety.totalFlats - mockSociety.occupiedFlats}
+                        {mockSociety.total_units - mockSociety.occupiedFlats}
                       </span>
                     </div>
                   </CardContent>

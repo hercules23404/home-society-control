@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import {
@@ -32,70 +31,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-// Mock data
-const mockRequests = [
-  {
-    id: "1",
-    title: "Plumbing Issue in Bathroom",
-    tenant: "Amit Kumar",
-    status: "in-progress" as const,
-    date: "Apr 9, 2025",
-    flat: "A-101",
-  },
-  {
-    id: "2",
-    title: "Electrical Socket Not Working",
-    tenant: "Priya Singh",
-    status: "pending" as const,
-    date: "Apr 8, 2025",
-    flat: "B-205",
-  },
-  {
-    id: "3",
-    title: "Water Leakage from Ceiling",
-    tenant: "Rahul Sharma",
-    status: "pending" as const,
-    date: "Apr 7, 2025",
-    flat: "C-304",
-  },
-  {
-    id: "4",
-    title: "Main Door Lock Issue",
-    tenant: "Neha Gupta",
-    status: "resolved" as const,
-    date: "Apr 5, 2025",
-    flat: "D-402",
-  },
-];
-
-const mockTenants = [
-  {
-    id: "1",
-    name: "Amit Kumar",
-    flat: "A-101",
-    status: "verified",
-    joinedOn: "Mar 15, 2025",
-  },
-  {
-    id: "2",
-    name: "Priya Singh",
-    flat: "B-205",
-    status: "pending",
-    joinedOn: "Apr 2, 2025",
-  },
-  {
-    id: "3",
-    name: "Rahul Sharma",
-    flat: "C-304",
-    status: "verified",
-    joinedOn: "Feb 20, 2025",
-  },
-];
+import { mockRequests, mockTenants, mockProperties, mockNotices } from "@/utils/mockData";
 
 const AdminDashboard = () => {
   const [requests] = useState(mockRequests);
   const [tenants] = useState(mockTenants);
+
+  const totalTenants = tenants.length;
+  const pendingTenants = tenants.filter(t => t.status === 'pending').length;
+  const openRequests = requests.filter(r => r.status !== 'resolved').length;
+  const propertiesCount = mockProperties.length;
+  const noticesCount = mockNotices.length;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -121,18 +67,27 @@ const AdminDashboard = () => {
     }
   };
 
+  const resolvedPercentage = 65;
+  const inProgressPercentage = 20;
+  const pendingPercentage = 10;
+  const rejectedPercentage = 5;
+
+  const verifiedPercentage = 75;
+  const pendingVerificationPercentage = 20;
+  const rejectedVerificationPercentage = 5;
+
   const stats = [
     {
       title: "Total Tenants",
-      value: "42",
+      value: totalTenants.toString(),
       icon: <Users className="h-6 w-6" />,
-      description: "8 pending verification",
+      description: `${pendingTenants} pending verification`,
       color: "bg-blue-50 text-blue-700",
       path: "/admin/tenants",
     },
     {
       title: "Open Requests",
-      value: "15",
+      value: openRequests.toString(),
       icon: <MessageSquare className="h-6 w-6" />,
       description: "5 new since last week",
       color: "bg-amber-50 text-amber-700",
@@ -140,7 +95,7 @@ const AdminDashboard = () => {
     },
     {
       title: "Properties",
-      value: "38",
+      value: propertiesCount.toString(),
       icon: <Home className="h-6 w-6" />,
       description: "3 new listings",
       color: "bg-green-50 text-green-700",
@@ -148,7 +103,7 @@ const AdminDashboard = () => {
     },
     {
       title: "Notices",
-      value: "7",
+      value: noticesCount.toString(),
       icon: <Bell className="h-6 w-6" />,
       description: "2 posted this month",
       color: "bg-purple-50 text-purple-700",
@@ -248,9 +203,9 @@ const AdminDashboard = () => {
                   <span className="flex items-center text-green-700">
                     <CheckCircle className="h-4 w-4 mr-1" /> Resolved
                   </span>
-                  <span>65%</span>
+                  <span>{resolvedPercentage}%</span>
                 </div>
-                <Progress value={65} className="h-2 bg-gray-100" />
+                <Progress value={resolvedPercentage} className="h-2 bg-gray-100" />
               </div>
 
               <div className="space-y-2">
@@ -258,9 +213,9 @@ const AdminDashboard = () => {
                   <span className="flex items-center text-blue-700">
                     <Clock className="h-4 w-4 mr-1" /> In Progress
                   </span>
-                  <span>20%</span>
+                  <span>{inProgressPercentage}%</span>
                 </div>
-                <Progress value={20} className="h-2 bg-gray-100" />
+                <Progress value={inProgressPercentage} className="h-2 bg-gray-100" />
               </div>
 
               <div className="space-y-2">
@@ -268,9 +223,9 @@ const AdminDashboard = () => {
                   <span className="flex items-center text-amber-700">
                     <Clock className="h-4 w-4 mr-1" /> Pending
                   </span>
-                  <span>10%</span>
+                  <span>{pendingPercentage}%</span>
                 </div>
-                <Progress value={10} className="h-2 bg-gray-100" />
+                <Progress value={pendingPercentage} className="h-2 bg-gray-100" />
               </div>
 
               <div className="space-y-2">
@@ -278,9 +233,9 @@ const AdminDashboard = () => {
                   <span className="flex items-center text-red-700">
                     <XCircle className="h-4 w-4 mr-1" /> Rejected
                   </span>
-                  <span>5%</span>
+                  <span>{rejectedPercentage}%</span>
                 </div>
-                <Progress value={5} className="h-2 bg-gray-100" />
+                <Progress value={rejectedPercentage} className="h-2 bg-gray-100" />
               </div>
             </div>
           </CardContent>
@@ -315,7 +270,7 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tenants.map((tenant) => (
+                  {tenants.slice(0, 3).map((tenant) => (
                     <TableRow key={tenant.id}>
                       <TableCell className="font-medium">{tenant.name}</TableCell>
                       <TableCell>{tenant.flat}</TableCell>
@@ -351,9 +306,9 @@ const AdminDashboard = () => {
                   <span className="flex items-center text-green-700">
                     <UserCheck className="h-4 w-4 mr-1" /> Verified
                   </span>
-                  <span>75%</span>
+                  <span>{verifiedPercentage}%</span>
                 </div>
-                <Progress value={75} className="h-2 bg-gray-100" />
+                <Progress value={verifiedPercentage} className="h-2 bg-gray-100" />
               </div>
 
               <div className="space-y-2">
@@ -361,9 +316,9 @@ const AdminDashboard = () => {
                   <span className="flex items-center text-amber-700">
                     <Clock className="h-4 w-4 mr-1" /> Pending
                   </span>
-                  <span>20%</span>
+                  <span>{pendingVerificationPercentage}%</span>
                 </div>
-                <Progress value={20} className="h-2 bg-gray-100" />
+                <Progress value={pendingVerificationPercentage} className="h-2 bg-gray-100" />
               </div>
 
               <div className="space-y-2">
@@ -371,9 +326,9 @@ const AdminDashboard = () => {
                   <span className="flex items-center text-red-700">
                     <UserX className="h-4 w-4 mr-1" /> Rejected
                   </span>
-                  <span>5%</span>
+                  <span>{rejectedVerificationPercentage}%</span>
                 </div>
-                <Progress value={5} className="h-2 bg-gray-100" />
+                <Progress value={rejectedVerificationPercentage} className="h-2 bg-gray-100" />
               </div>
 
               <Button 
