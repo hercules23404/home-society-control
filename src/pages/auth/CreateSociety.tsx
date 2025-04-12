@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   name: z.string().min(2, "Society name must be at least 2 characters"),
@@ -86,20 +87,77 @@ const CreateSociety = () => {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     
-    const societyData = {
-      ...data,
-      amenities,
-      utilityWorkers,
-    };
-    
-    // This is where you'd connect to Supabase to create society
-    // For now, we'll simulate a successful creation
-    setTimeout(() => {
-      console.log("Society creation data:", societyData);
+    try {
+      // Create society in Supabase
+      const { data: societyData, error: societyError } = await supabase
+        .from('societies')
+        .insert({
+          name: data.name,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          zip_code: data.pincode,
+          total_units: parseInt(data.totalFlats),
+          amenities: amenities,
+        })
+        .select()
+        .single();
+      
+      if (societyError) throw societyError;
+      
+      // If user is authenticated, add them as admin
+      const { data: authData } = await supabase.auth.getUser();
+      
+      if (authData?.user) {
+        // Add user as admin for this society
+        const { error: adminError } = await supabase
+          .from('admins')
+          .insert({
+            user_id: authData.user.id,
+            society_id: societyData.id,
+            designation: 'Owner'
+          });
+          
+        if (adminError) {
+          console.error("Error adding admin:", adminError);
+          // Continue despite error adding admin role
+        }
+        
+        // Update user profile to confirm admin role
+        await supabase
+          .from('profiles')
+          .update({ role: 'admin' })
+          .eq('id', authData.user.id);
+      }
+      
+      // Add utility workers if any
+      if (utilityWorkers.length > 0 && societyData) {
+        const workersToInsert = utilityWorkers.map(worker => ({
+          name: worker.name,
+          role: worker.role,
+          society_id: societyData.id
+        }));
+        
+        const { error: workersError } = await supabase
+          .from('utility_workers')
+          .insert(workersToInsert);
+          
+        if (workersError) {
+          console.error("Error adding utility workers:", workersError);
+          // Continue despite worker errors
+        }
+      }
+      
       toast.success("Society created successfully!");
-      navigate("/admin/login");
+      navigate("/admin/dashboard");
+    } catch (error: any) {
+      console.error("Society creation error:", error);
+      toast.error("Failed to create society", {
+        description: error.message || "An unexpected error occurred"
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
