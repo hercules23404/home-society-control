@@ -16,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { Home, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -24,13 +25,16 @@ const loginSchema = z.object({
 
 const TenantLogin = () => {
   const navigate = useNavigate();
-  const { signIn, userRole } = useAuth();
+  const { signIn, userRole, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect when userRole changes
   useEffect(() => {
     if (userRole === 'tenant') {
-      navigate('/tenant/dashboard');
+      navigate('/tenant/dashboard', { replace: true });
+    } else if (userRole === 'admin') {
+      // If an admin tries to access tenant login, redirect them
+      navigate('/admin/dashboard', { replace: true });
     }
   }, [userRole, navigate]);
 
@@ -43,6 +47,8 @@ const TenantLogin = () => {
   });
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
+    if (isLoading) return; // Prevent multiple submissions
+    
     setIsLoading(true);
     
     try {
@@ -52,9 +58,14 @@ const TenantLogin = () => {
         throw new Error(result.error || 'Login failed');
       }
       
-      // The redirection will happen in the useEffect when userRole is updated
+      // The redirection will happen in the useEffect when userRole is updated by AuthContext
+      toast.success('Login successful! Redirecting...');
     } catch (error: any) {
       console.error("Login error:", error);
+      toast.error('Login failed', { 
+        description: error.message || 'Please check your credentials and try again' 
+      });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -79,60 +90,67 @@ const TenantLogin = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label>Email</Label>
-              <Input 
-                {...register('email')}
-                type="email" 
-                placeholder="Enter your email" 
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm">
-                  {errors.email.message?.toString()}
+          {authLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />
+              <span className="sr-only">Loading...</span>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <Label>Email</Label>
+                <Input 
+                  {...register('email')}
+                  type="email" 
+                  placeholder="Enter your email" 
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-sm">
+                    {errors.email.message?.toString()}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label>Password</Label>
+                <Input 
+                  {...register('password')}
+                  type="password" 
+                  placeholder="Enter your password" 
+                />
+                {errors.password && (
+                  <p className="text-red-500 text-sm">
+                    {errors.password.message?.toString()}
+                  </p>
+                )}
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span>Logging in...</span>
+                  </div>
+                ) : "Login"}
+              </Button>
+
+              <div className="text-center">
+                <p>
+                  Don't have an account? {' '}
+                  <Link 
+                    to="/tenant/signup" 
+                    className="text-blue-600 hover:underline"
+                  >
+                    Sign Up
+                  </Link>
                 </p>
-              )}
-            </div>
-
-            <div>
-              <Label>Password</Label>
-              <Input 
-                {...register('password')}
-                type="password" 
-                placeholder="Enter your password" 
-              />
-              {errors.password && (
-                <p className="text-red-500 text-sm">
-                  {errors.password.message?.toString()}
-                </p>
-              )}
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  <span>Logging in...</span>
-                </div>
-              ) : "Login"}
-            </Button>
-
-            <div className="text-center">
-              <p>
-                Don't have an account? {' '}
-                <Link 
-                  to="/tenant/signup" 
-                  className="text-blue-600 hover:underline"
-                >
-                  Sign Up
-                </Link>
-              </p>
-            </div>
-          </form>
+              </div>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>

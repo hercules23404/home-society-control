@@ -14,15 +14,15 @@ const RouteProtection = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { user, userRole, loading } = useAuth();
 
   useEffect(() => {
-    console.log('RouteProtection: User role:', userRole, 'Required role:', requiredRole);
-  }, [userRole, requiredRole]);
+    console.log('RouteProtection: User role:', userRole, 'Required role:', requiredRole, 'Loading:', loading);
+  }, [userRole, requiredRole, loading]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />
-          <p className="text-rental-text">Loading authentication...</p>
+          <p className="text-rental-text">Verifying authentication...</p>
         </div>
       </div>
     );
@@ -35,7 +35,9 @@ const RouteProtection = ({ children, requiredRole }: ProtectedRouteProps) => {
 
   // If user is not logged in, redirect to login
   if (!user) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    // Redirect to appropriate login page based on the required role
+    const loginPath = requiredRole === 'admin' ? '/admin/login' : '/tenant/login';
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
   // If specific role is required but user doesn't have it

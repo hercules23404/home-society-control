@@ -39,12 +39,15 @@ const TenantSignup = () => {
   const { societies, fetchSocieties, loading: societiesLoading } = useSocietySelection();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { signUp, userRole } = useAuth();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { signUp, userRole, loading: authLoading } = useAuth();
 
+  // Redirect if user is already authenticated as a tenant
   useEffect(() => {
     if (userRole === 'tenant') {
-      navigate('/tenant/dashboard');
+      navigate('/tenant/dashboard', { replace: true });
+    } else if (userRole === 'admin') {
+      // If an admin tries to access tenant signup, redirect them
+      navigate('/admin/dashboard', { replace: true });
     }
   }, [userRole, navigate]);
 
@@ -71,22 +74,19 @@ const TenantSignup = () => {
   }, [societies]);
 
   const onSubmit = async (data: z.infer<typeof signupSchema>) => {
+    if (isSubmitting) return; // Prevent multiple submissions
+    
     try {
       setIsSubmitting(true);
       
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password
-      });
+      // Step 1: Create the user in auth system
+      const { success, error, userId } = await signUp(data.email, data.password);
 
-      if (authError) throw authError;
-      
-      if (!authData.user) {
-        throw new Error("User creation failed");
+      if (!success || !userId) {
+        throw new Error(error || "Signup failed");
       }
       
-      setUserId(authData.user.id);
-
+      // Step 2: Update the profile with name and role
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -94,24 +94,33 @@ const TenantSignup = () => {
           last_name: data.lastName,
           role: 'tenant'
         })
-        .eq('id', authData.user.id);
+        .eq('id', userId);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+        throw profileError;
+      }
 
+      // Step 3: Create the tenant record
       const { error: tenantError } = await supabase
         .from('tenants')
         .insert({
-          user_id: authData.user.id,
+          user_id: userId,
           society_id: data.societyId,
           flat_number: '' // Will be updated later
         });
 
-      if (tenantError) throw tenantError;
+      if (tenantError) {
+        console.error("Tenant creation error:", tenantError);
+        throw tenantError;
+      }
 
-      toast.success('Account created successfully');
+      toast.success('Account created successfully! Redirecting to dashboard...');
+      
+      // The redirect will happen automatically via the AuthContext
     } catch (error: any) {
       toast.error('Signup failed', {
-        description: error.message
+        description: error.message || 'Please check your information and try again'
       });
       console.error("Signup error:", error);
     } finally {
@@ -139,132 +148,139 @@ const TenantSignup = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label>First Name</Label>
-              <Input 
-                {...register('firstName')}
-                placeholder="Enter your first name" 
-              />
-              {errors.firstName && (
-                <p className="text-red-500 text-sm">
-                  {errors.firstName.message?.toString()}
-                </p>
-              )}
+          {authLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />
+              <span className="sr-only">Loading authentication...</span>
             </div>
-
-            <div>
-              <Label>Last Name</Label>
-              <Input 
-                {...register('lastName')}
-                placeholder="Enter your last name" 
-              />
-              {errors.lastName && (
-                <p className="text-red-500 text-sm">
-                  {errors.lastName.message?.toString()}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label>Email</Label>
-              <Input 
-                {...register('email')}
-                type="email" 
-                placeholder="Enter your email" 
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm">
-                  {errors.email.message?.toString()}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label>Password</Label>
-              <Input 
-                {...register('password')}
-                type="password" 
-                placeholder="Enter your password" 
-              />
-              {errors.password && (
-                <p className="text-red-500 text-sm">
-                  {errors.password.message?.toString()}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label>Select Society</Label>
-              <Controller
-                name="societyId"
-                control={control}
-                render={({ field }) => (
-                  <Select 
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={societiesLoading ? "Loading societies..." : "Choose your society"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {societiesLoading ? (
-                        <div className="flex items-center justify-center p-2">
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          <span>Loading...</span>
-                        </div>
-                      ) : societies && societies.length > 0 ? (
-                        societies.map((society) => (
-                          <SelectItem 
-                            key={society.id} 
-                            value={society.id}
-                          >
-                            {society.name} - {society.city}, {society.state}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="none" disabled>
-                          No societies available
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <Label>First Name</Label>
+                <Input 
+                  {...register('firstName')}
+                  placeholder="Enter your first name" 
+                />
+                {errors.firstName && (
+                  <p className="text-red-500 text-sm">
+                    {errors.firstName.message?.toString()}
+                  </p>
                 )}
-              />
-              {errors.societyId && (
-                <p className="text-red-500 text-sm">
-                  {errors.societyId.message?.toString()}
+              </div>
+
+              <div>
+                <Label>Last Name</Label>
+                <Input 
+                  {...register('lastName')}
+                  placeholder="Enter your last name" 
+                />
+                {errors.lastName && (
+                  <p className="text-red-500 text-sm">
+                    {errors.lastName.message?.toString()}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label>Email</Label>
+                <Input 
+                  {...register('email')}
+                  type="email" 
+                  placeholder="Enter your email" 
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-sm">
+                    {errors.email.message?.toString()}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label>Password</Label>
+                <Input 
+                  {...register('password')}
+                  type="password" 
+                  placeholder="Enter your password" 
+                />
+                {errors.password && (
+                  <p className="text-red-500 text-sm">
+                    {errors.password.message?.toString()}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label>Select Society</Label>
+                <Controller
+                  name="societyId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select 
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={societiesLoading ? "Loading societies..." : "Choose your society"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {societiesLoading ? (
+                          <div className="flex items-center justify-center p-2">
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            <span>Loading...</span>
+                          </div>
+                        ) : societies && societies.length > 0 ? (
+                          societies.map((society) => (
+                            <SelectItem 
+                              key={society.id} 
+                              value={society.id}
+                            >
+                              {society.name} - {society.city}, {society.state}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="none" disabled>
+                            No societies available
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.societyId && (
+                  <p className="text-red-500 text-sm">
+                    {errors.societyId.message?.toString()}
+                  </p>
+                )}
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  "Create Account"
+                )}
+              </Button>
+
+              <div className="text-center">
+                <p>
+                  Already have an account? {' '}
+                  <Link 
+                    to="/tenant/login" 
+                    className="text-blue-600 hover:underline"
+                  >
+                    Login
+                  </Link>
                 </p>
-              )}
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Account...
-                </>
-              ) : (
-                "Create Account"
-              )}
-            </Button>
-
-            <div className="text-center">
-              <p>
-                Already have an account? {' '}
-                <Link 
-                  to="/tenant/login" 
-                  className="text-blue-600 hover:underline"
-                >
-                  Login
-                </Link>
-              </p>
-            </div>
-          </form>
+              </div>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>

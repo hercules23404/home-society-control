@@ -58,9 +58,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Set up auth state change listener and fetch initial session
+  // Handle user redirection based on role
+  const handleRoleBasedRedirection = (role: string | null) => {
+    if (!role) return;
+    
+    console.log('Redirecting based on role:', role);
+    
+    if (role === 'admin') {
+      navigate('/admin/dashboard');
+    } else if (role === 'tenant') {
+      navigate('/tenant/dashboard');
+    }
+  };
+
+  // Initialize auth state and set up change listener
   useEffect(() => {
-    // Set loading to true while we initialize
+    console.log('Setting up auth state listener');
     setLoading(true);
     
     // First set up the auth state listener
@@ -72,18 +85,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
-          // Fetch user profile information, but defer to avoid auth deadlock
+          // Use setTimeout to avoid potential auth deadlocks
           setTimeout(async () => {
             const profile = await fetchUserProfile(currentSession.user.id);
             if (profile) {
               setUserRole(profile.role);
+              // Only redirect on SIGNED_IN events to avoid loops
+              if (event === 'SIGNED_IN') {
+                handleRoleBasedRedirection(profile.role);
+              }
             }
+            setLoading(false);
           }, 0);
         } else {
           setUserRole(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -99,6 +116,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const profile = await fetchUserProfile(initialSession.user.id);
           if (profile) {
             setUserRole(profile.role);
+            // Don't redirect on initial load to prevent unwanted redirects
           }
         }
       } catch (error) {
@@ -113,7 +131,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   // Sign in function
   const signIn = async (email: string, password: string) => {
@@ -127,16 +145,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (error) {
         console.error('Login error:', error);
+        toast.error('Login failed', { description: error.message });
         return { success: false, error: error.message };
       }
 
-      // The session will be picked up by the onAuthStateChange listener
+      if (!data.session) {
+        toast.error('Login failed', { description: 'Session could not be established' });
+        return { success: false, error: 'Session could not be established' };
+      }
+
+      // Session will be picked up by the onAuthStateChange listener
       console.log('Sign in successful');
       toast.success('Sign in successful');
       
       return { success: true };
     } catch (error: any) {
       console.error('Unexpected login error:', error);
+      toast.error('Login failed', { description: error.message });
       return { success: false, error: error.message };
     } finally {
       setLoading(false);
@@ -158,15 +183,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (error) {
         console.error('Signup error:', error);
+        toast.error('Signup failed', { description: error.message });
         return { success: false, error: error.message };
+      }
+
+      if (!data.user) {
+        toast.error('Signup failed', { description: 'User could not be created' });
+        return { success: false, error: 'User could not be created' };
       }
 
       console.log('Sign up successful');
       toast.success('Sign up successful');
       
-      return { success: true };
+      return { success: true, userId: data.user.id };
     } catch (error: any) {
       console.error('Unexpected signup error:', error);
+      toast.error('Signup failed', { description: error.message });
       return { success: false, error: error.message };
     } finally {
       setLoading(false);
@@ -176,13 +208,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Sign out function
   const signOut = async () => {
     try {
+      setLoading(true);
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
       setUserRole(null);
       navigate('/');
+      toast.success('Signed out successfully');
     } catch (error) {
       console.error('Sign out error:', error);
+      toast.error('Sign out failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -202,8 +239,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (data.role) {
         setUserRole(data.role);
       }
-    } catch (error) {
+      
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
       console.error('Error updating user data:', error);
+      toast.error('Failed to update profile', { description: error.message });
       throw error;
     }
   };

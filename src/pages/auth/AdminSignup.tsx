@@ -37,25 +37,19 @@ type FormData = z.infer<typeof formSchema>;
 
 const AdminSignup = () => {
   const navigate = useNavigate();
-  const { userRole, signUp } = useAuth();
+  const { userRole, signUp, loading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [designation, setDesignation] = useState<string | null>(null);
 
-  // When userRole changes after signup, navigate accordingly
+  // Redirect based on role
   useEffect(() => {
-    if (userRole === 'admin' && userId) {
-      navigate("/admin/create-society", { 
-        state: { 
-          userId,
-          designation
-        },
-        replace: true
-      });
+    if (userRole === 'admin') {
+      navigate("/admin/dashboard", { replace: true });
+    } else if (userRole === 'tenant') {
+      navigate("/tenant/dashboard", { replace: true });
     }
-  }, [userRole, userId, designation, navigate]);
+  }, [userRole, navigate]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -70,31 +64,23 @@ const AdminSignup = () => {
   });
 
   const onSubmit = async (data: FormData) => {
+    if (isLoading) return; // Prevent multiple submissions
+    
     setIsLoading(true);
     
     try {
       // Step 1: Register the user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            full_name: data.name,
-            phone: data.phone,
-            designation: data.designation
-          }
-        }
+      const { success, error, userId } = await signUp(data.email, data.password, {
+        full_name: data.name,
+        phone: data.phone,
+        designation: data.designation
       });
 
-      if (authError) throw authError;
-      
-      if (!authData.user) {
-        throw new Error("User creation failed");
+      if (!success || !userId) {
+        throw new Error(error || "User creation failed");
       }
 
-      setUserId(authData.user.id);
-      setDesignation(data.designation);
-      console.log("Auth user created successfully:", authData.user.id);
+      console.log("Auth user created successfully:", userId);
 
       // Step 2: Update the user's profile with additional information
       const nameParts = data.name.split(' ');
@@ -109,7 +95,7 @@ const AdminSignup = () => {
           phone: data.phone,
           role: 'admin'
         })
-        .eq('id', authData.user.id);
+        .eq('id', userId);
 
       if (profileError) {
         console.error("Profile update error:", profileError);
@@ -117,20 +103,42 @@ const AdminSignup = () => {
       }
 
       console.log("Profile updated successfully");
-
       toast.success("Registration successful!");
       
-      // The navigation will happen automatically in the useEffect when userRole is updated
+      // Navigate to society creation with user data
+      navigate("/admin/create-society", { 
+        state: { 
+          userId,
+          designation: data.designation
+        },
+        replace: true
+      });
       
     } catch (error: any) {
       console.error("Registration error:", error);
       toast.error("Registration failed", {
-        description: error.message
+        description: error.message || "Please check your information and try again"
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Don't render form while auth is being checked
+  if (authLoading) {
+    return (
+      <AuthLayout 
+        title="Create Admin Account" 
+        subtitle="Set up your account to manage your society"
+        userType="admin"
+      >
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />
+          <span className="sr-only">Loading authentication...</span>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout 

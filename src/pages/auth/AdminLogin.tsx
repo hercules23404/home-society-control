@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -29,9 +29,19 @@ type FormData = z.infer<typeof formSchema>;
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { signIn, userRole } = useAuth();
+  const { signIn, userRole, loading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect based on role
+  useEffect(() => {
+    if (userRole === 'admin') {
+      navigate("/admin/dashboard", { replace: true });
+    } else if (userRole === 'tenant') {
+      // If a tenant tries to access admin login, redirect them
+      navigate("/tenant/dashboard", { replace: true });
+    }
+  }, [userRole, navigate]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -41,14 +51,9 @@ const AdminLogin = () => {
     },
   });
 
-  // When userRole changes after login, navigate accordingly
-  useState(() => {
-    if (userRole === 'admin') {
-      navigate("/admin/dashboard");
-    }
-  });
-
   const onSubmit = async (data: FormData) => {
+    if (isLoading) return; // Prevent multiple submissions
+    
     setIsLoading(true);
     
     try {
@@ -58,16 +63,33 @@ const AdminLogin = () => {
         throw new Error(result.error || 'Login failed');
       }
 
+      toast.success('Login successful! Redirecting...');
       // The navigation will happen automatically once the auth context updates the userRole
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error("Login failed", {
-        description: error.message
+        description: error.message || "Please check your credentials and try again"
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Don't render form while auth is being checked
+  if (authLoading) {
+    return (
+      <AuthLayout 
+        title="Admin Login" 
+        subtitle="Manage your society and residents"
+        userType="admin"
+      >
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />
+          <span className="sr-only">Loading...</span>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout 
