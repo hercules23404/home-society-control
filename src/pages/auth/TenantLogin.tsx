@@ -1,135 +1,143 @@
 
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { toast } from 'sonner';
+import { Link, useNavigate } from 'react-router-dom';
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import AuthLayout from "@/components/auth/AuthLayout";
-
-const formSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters')
 });
-
-type FormData = z.infer<typeof formSchema>;
 
 const TenantLogin = () => {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors } 
+  } = useForm({
+    resolver: zodResolver(loginSchema)
   });
 
-  const onSubmit = async (data: FormData) => {
-    setIsLoading(true);
-    
-    // This is where you'd connect to Supabase for authentication
-    // For now, we'll simulate a successful login
-    setTimeout(() => {
-      console.log("Login details:", data);
-      toast.success("Login successful!");
-      localStorage.setItem("userRole", "tenant");
-      navigate("/tenant/dashboard");
-      setIsLoading(false);
-    }, 1000);
+  const onSubmit = async (data: z.infer<typeof loginSchema>) => {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password
+      });
+
+      if (authError) throw authError;
+
+      // Check if user is a tenant
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', authData.user?.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profileData.role !== 'tenant') {
+        await supabase.auth.signOut();
+        throw new Error('Access denied. Please use the correct login method.');
+      }
+
+      // Check if tenant is assigned to a society
+      const { data: tenantData, error: tenantError } = await supabase
+        .from('tenants')
+        .select('society_id')
+        .eq('user_id', authData.user?.id)
+        .single();
+
+      if (tenantError) {
+        toast.error('You are not assigned to a society', {
+          description: 'Please contact your society admin.'
+        });
+        await supabase.auth.signOut();
+        return;
+      }
+
+      toast.success('Login successful');
+      navigate('/tenant/dashboard');
+    } catch (error: any) {
+      toast.error('Login failed', {
+        description: error.message
+      });
+    }
   };
 
   return (
-    <AuthLayout 
-      title="Tenant Login" 
-      subtitle="Access your society's services and information"
-      userType="tenant"
-    >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="your.email@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      {...field}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                      <span className="sr-only">
-                        {showPassword ? "Hide password" : "Show password"}
-                      </span>
-                    </Button>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <Button 
-            type="submit" 
-            className="w-full bg-rental-primary hover:bg-rental-secondary"
-            disabled={isLoading}
-          >
-            {isLoading ? "Logging in..." : "Login"}
-          </Button>
-        </form>
-      </Form>
-      
-      <div className="mt-4 text-center">
-        <p className="text-sm text-rental-text-light">
-          Don't have an account?{" "}
-          <Link to="/tenant/signup" className="text-rental-primary font-medium hover:underline">
-            Sign up
-          </Link>
-        </p>
-      </div>
-    </AuthLayout>
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Tenant Login</CardTitle>
+          <CardDescription>
+            Login to access your tenant dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label>Email</Label>
+              <Input 
+                {...register('email')}
+                type="email" 
+                placeholder="Enter your email" 
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label>Password</Label>
+              <Input 
+                {...register('password')}
+                type="password" 
+                placeholder="Enter your password" 
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <Button type="submit" className="w-full">
+              Login
+            </Button>
+
+            <div className="text-center">
+              <p>
+                Don't have an account? {' '}
+                <Link 
+                  to="/tenant/signup" 
+                  className="text-blue-600 hover:underline"
+                >
+                  Sign Up
+                </Link>
+              </p>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

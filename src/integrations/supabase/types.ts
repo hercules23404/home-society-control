@@ -9,7 +9,511 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      admins: {
+        Row: {
+          created_at: string | null
+          designation: string | null
+          is_active: boolean | null
+          society_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          designation?: string | null
+          is_active?: boolean | null
+          society_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          designation?: string | null
+          is_active?: boolean | null
+          society_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admins_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          post_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_posts: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_admin_post: boolean | null
+          is_pinned: boolean | null
+          notice_type: Database["public"]["Enums"]["notice_type"] | null
+          photos: string[] | null
+          society_id: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_admin_post?: boolean | null
+          is_pinned?: boolean | null
+          notice_type?: Database["public"]["Enums"]["notice_type"] | null
+          photos?: string[] | null
+          society_id: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_admin_post?: boolean | null
+          is_pinned?: boolean | null
+          notice_type?: Database["public"]["Enums"]["notice_type"] | null
+          photos?: string[] | null
+          society_id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_requests: {
+        Row: {
+          assigned_worker: string | null
+          cost: number | null
+          created_at: string | null
+          description: string
+          id: string
+          issue_type: string
+          photos: string[] | null
+          property_id: string | null
+          society_id: string
+          status: Database["public"]["Enums"]["maintenance_status_type"] | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_worker?: string | null
+          cost?: number | null
+          created_at?: string | null
+          description: string
+          id?: string
+          issue_type: string
+          photos?: string[] | null
+          property_id?: string | null
+          society_id: string
+          status?: Database["public"]["Enums"]["maintenance_status_type"] | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_worker?: string | null
+          cost?: number | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          issue_type?: string
+          photos?: string[] | null
+          property_id?: string | null
+          society_id?: string
+          status?: Database["public"]["Enums"]["maintenance_status_type"] | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_requests_assigned_worker_fkey"
+            columns: ["assigned_worker"]
+            isOneToOne: false
+            referencedRelation: "utility_workers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          phone?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string
+          amenities: string[] | null
+          area_sqft: number
+          bathrooms: number
+          bedrooms: number
+          city: string
+          created_at: string | null
+          description: string | null
+          id: string
+          owner_id: string | null
+          photos: string[] | null
+          property_type: Database["public"]["Enums"]["property_type"]
+          rent_amount: number
+          society_id: string
+          state: string
+          status: Database["public"]["Enums"]["property_status_type"] | null
+          updated_at: string | null
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          amenities?: string[] | null
+          area_sqft: number
+          bathrooms: number
+          bedrooms: number
+          city: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          owner_id?: string | null
+          photos?: string[] | null
+          property_type: Database["public"]["Enums"]["property_type"]
+          rent_amount: number
+          society_id: string
+          state: string
+          status?: Database["public"]["Enums"]["property_status_type"] | null
+          updated_at?: string | null
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          amenities?: string[] | null
+          area_sqft?: number
+          bathrooms?: number
+          bedrooms?: number
+          city?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          owner_id?: string | null
+          photos?: string[] | null
+          property_type?: Database["public"]["Enums"]["property_type"]
+          rent_amount?: number
+          society_id?: string
+          state?: string
+          status?: Database["public"]["Enums"]["property_status_type"] | null
+          updated_at?: string | null
+          zip_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rent_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          due_date: string
+          id: string
+          late_fee: number | null
+          paid_date: string | null
+          payment_method: string | null
+          payment_status:
+            | Database["public"]["Enums"]["payment_status_type"]
+            | null
+          property_id: string | null
+          receipt_url: string | null
+          society_id: string
+          tenant_id: string
+          transaction_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          due_date: string
+          id?: string
+          late_fee?: number | null
+          paid_date?: string | null
+          payment_method?: string | null
+          payment_status?:
+            | Database["public"]["Enums"]["payment_status_type"]
+            | null
+          property_id?: string | null
+          receipt_url?: string | null
+          society_id: string
+          tenant_id: string
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          late_fee?: number | null
+          paid_date?: string | null
+          payment_method?: string | null
+          payment_status?:
+            | Database["public"]["Enums"]["payment_status_type"]
+            | null
+          property_id?: string | null
+          receipt_url?: string | null
+          society_id?: string
+          tenant_id?: string
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_payments_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      societies: {
+        Row: {
+          address: string
+          amenities: string[] | null
+          city: string
+          created_at: string | null
+          id: string
+          name: string
+          state: string
+          total_units: number
+          updated_at: string | null
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          amenities?: string[] | null
+          city: string
+          created_at?: string | null
+          id?: string
+          name: string
+          state: string
+          total_units: number
+          updated_at?: string | null
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          amenities?: string[] | null
+          city?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          state?: string
+          total_units?: number
+          updated_at?: string | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      tenant_documents: {
+        Row: {
+          document_type: string
+          file_path: string
+          id: string
+          tenant_id: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          document_type: string
+          file_path: string
+          id?: string
+          tenant_id: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          document_type?: string
+          file_path?: string
+          id?: string
+          tenant_id?: string
+          uploaded_at?: string | null
+        }
+        Relationships: []
+      }
+      tenants: {
+        Row: {
+          created_at: string | null
+          flat_number: string
+          is_active: boolean | null
+          society_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          flat_number: string
+          is_active?: boolean | null
+          society_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          flat_number?: string
+          is_active?: boolean | null
+          society_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utility_workers: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          role: string
+          society_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          role: string
+          society_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          role?: string
+          society_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_workers_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +522,23 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      maintenance_status_type:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "rejected"
+      notice_type: "general" | "maintenance" | "events" | "emergency"
+      payment_status_type: "pending" | "paid" | "overdue" | "cancelled"
+      property_status_type: "vacant" | "occupied" | "under_maintenance"
+      property_type:
+        | "1BHK"
+        | "2BHK"
+        | "3BHK"
+        | "4BHK"
+        | "studio"
+        | "villa"
+        | "other"
+      user_role: "tenant" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +653,26 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      maintenance_status_type: [
+        "pending",
+        "in_progress",
+        "completed",
+        "rejected",
+      ],
+      notice_type: ["general", "maintenance", "events", "emergency"],
+      payment_status_type: ["pending", "paid", "overdue", "cancelled"],
+      property_status_type: ["vacant", "occupied", "under_maintenance"],
+      property_type: [
+        "1BHK",
+        "2BHK",
+        "3BHK",
+        "4BHK",
+        "studio",
+        "villa",
+        "other",
+      ],
+      user_role: ["tenant", "admin"],
+    },
   },
 } as const
