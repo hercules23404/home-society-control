@@ -28,7 +28,7 @@ const Hero = () => {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white/10"
+                className="border-white text-white hover:bg-white/20 hover:text-rental-primary"
               >
                 <Link to="/admin/login">Admin Login</Link>
               </Button>
