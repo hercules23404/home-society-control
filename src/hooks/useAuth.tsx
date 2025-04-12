@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +9,7 @@ type AuthContextType = {
   userRole: string | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signUp: (email: string, password: string, userData?: any) => Promise<{ success: boolean; error?: string }>;
+  signUp: (email: string, password: string, userData?: any) => Promise<{ success: boolean; error?: string; userId?: string }>;
   signOut: () => Promise<void>;
   updateUserData: (data: any) => Promise<void>;
 };
@@ -37,7 +36,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user profile and role
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data: profile, error } = await supabase
@@ -58,7 +56,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Handle user redirection based on role
   const handleRoleBasedRedirection = (role: string | null) => {
     if (!role) return;
     
@@ -71,12 +68,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Initialize auth state and set up change listener
   useEffect(() => {
     console.log('Setting up auth state listener');
     setLoading(true);
     
-    // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log('Auth state changed:', event);
@@ -85,12 +80,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
-          // Use setTimeout to avoid potential auth deadlocks
           setTimeout(async () => {
             const profile = await fetchUserProfile(currentSession.user.id);
             if (profile) {
               setUserRole(profile.role);
-              // Only redirect on SIGNED_IN events to avoid loops
               if (event === 'SIGNED_IN') {
                 handleRoleBasedRedirection(profile.role);
               }
@@ -104,7 +97,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    // Then check for existing session
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -116,7 +108,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const profile = await fetchUserProfile(initialSession.user.id);
           if (profile) {
             setUserRole(profile.role);
-            // Don't redirect on initial load to prevent unwanted redirects
           }
         }
       } catch (error) {
@@ -133,7 +124,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, [navigate]);
 
-  // Sign in function
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
@@ -154,7 +144,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return { success: false, error: 'Session could not be established' };
       }
 
-      // Session will be picked up by the onAuthStateChange listener
       console.log('Sign in successful');
       toast.success('Sign in successful');
       
@@ -168,7 +157,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Sign up function
   const signUp = async (email: string, password: string, userData: any = {}) => {
     try {
       setLoading(true);
@@ -205,7 +193,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Sign out function
   const signOut = async () => {
     try {
       setLoading(true);
@@ -223,7 +210,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Update user data function
   const updateUserData = async (data: any) => {
     try {
       if (!user) return;
@@ -235,7 +221,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
       if (error) throw error;
       
-      // Update local state if needed
       if (data.role) {
         setUserRole(data.role);
       }

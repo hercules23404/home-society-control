@@ -37,9 +37,10 @@ export type SocietyFormData = z.infer<typeof formSchema>;
 
 export interface SocietyFormProps {
   onSocietyCreated?: (societyId: string) => void;
+  isProcessing?: boolean;
 }
 
-export const SocietyForm = ({ onSocietyCreated }: SocietyFormProps) => {
+export const SocietyForm = ({ onSocietyCreated, isProcessing = false }: SocietyFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SocietyFormData>({
@@ -92,6 +93,9 @@ export const SocietyForm = ({ onSocietyCreated }: SocietyFormProps) => {
       setIsLoading(false);
     }
   };
+
+  // Using either the external isProcessing prop or the internal isLoading state
+  const buttonDisabled = isProcessing || isLoading;
 
   return (
     <Form {...form}>
@@ -197,9 +201,9 @@ export const SocietyForm = ({ onSocietyCreated }: SocietyFormProps) => {
         <Button 
           type="submit" 
           className="w-full bg-rental-primary hover:bg-rental-secondary"
-          disabled={isLoading}
+          disabled={buttonDisabled}
         >
-          {isLoading ? (
+          {buttonDisabled ? (
             <div className="flex items-center">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
               <span>Creating Society...</span>
