@@ -12,10 +12,9 @@ export const useSocietySelection = () => {
   const fetchSocieties = async () => {
     try {
       setLoading(true);
-      // Fetch all societies without any restrictions - available to all tenants
+      // Use the security definer function we created to avoid recursion issues
       const { data, error } = await supabase
-        .from('societies')
-        .select('id, name, address, city, state');
+        .rpc('get_societies');
       
       if (error) throw error;
       setSocieties(data || []);

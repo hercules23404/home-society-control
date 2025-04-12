@@ -523,6 +523,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_societies: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          address: string
+          amenities: string[] | null
+          city: string
+          created_at: string | null
+          id: string
+          name: string
+          state: string
+          total_units: number
+          updated_at: string | null
+          zip_code: string
+        }[]
+      }
     }
     Enums: {
       maintenance_status_type:
