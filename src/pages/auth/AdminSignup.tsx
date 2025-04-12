@@ -69,17 +69,31 @@ const AdminSignup = () => {
       }
 
       // Step 2: Update the user's profile with additional information
+      const nameParts = data.name.split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          first_name: data.name.split(' ')[0], // Simple way to split first name
-          last_name: data.name.split(' ').slice(1).join(' '), // Rest is last name
+          first_name: firstName,
+          last_name: lastName, 
           phone: data.phone,
           role: 'admin'
         })
         .eq('id', authData.user.id);
 
       if (profileError) throw profileError;
+
+      // Step 3: Create the admin record
+      const { error: adminError } = await supabase
+        .from('admins')
+        .insert({
+          user_id: authData.user.id,
+          designation: data.designation,
+        });
+
+      if (adminError) throw adminError;
 
       toast.success("Registration successful!");
       navigate("/admin/create-society");

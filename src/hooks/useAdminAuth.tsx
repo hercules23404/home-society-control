@@ -44,18 +44,19 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       // Check if user is an admin
       const { data: adminData, error: adminError } = await supabase
         .from('admins')
-        .select('*, societies(*)')
+        .select('*, society:societies(*)')
         .eq('user_id', user.id)
         .single();
 
       if (adminError || !adminData) {
+        console.log('Not an admin or error fetching admin data:', adminError);
         setIsAdmin(false);
         setSociety(null);
         return;
       }
 
       setIsAdmin(true);
-      setSociety(adminData.societies);
+      setSociety(adminData.society);
     } catch (error) {
       console.error('Error refreshing user:', error);
     } finally {
