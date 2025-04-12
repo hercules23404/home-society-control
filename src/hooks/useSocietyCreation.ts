@@ -9,7 +9,7 @@ export const useSocietyCreation = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [amenities, setAmenities] = useState<string[]>([]);
-  const [utilityWorkers, setUtilityWorkers] = useState<{ name: string; role: string }[]>([]);
+  const [utilityWorkers, setUtilityWorkers] = useState<{ name: string; role: string; phone?: string }[]>([]);
 
   const handleSubmitSociety = async (data: SocietyFormData) => {
     setIsLoading(true);
@@ -32,6 +32,7 @@ export const useSocietyCreation = () => {
           zip_code: data.zip_code,
           total_units: parseInt(data.total_units),
           amenities: amenities,
+          description: data.description || null,
         })
         .select()
         .single();
@@ -68,6 +69,7 @@ export const useSocietyCreation = () => {
         const workersToInsert = utilityWorkers.map(worker => ({
           name: worker.name,
           role: worker.role,
+          phone: worker.phone || null,
           society_id: societyData.id
         }));
         
@@ -79,6 +81,24 @@ export const useSocietyCreation = () => {
           console.error("Error adding utility workers:", workersError);
           // We don't throw here to allow society creation to succeed even if worker creation fails
         }
+      }
+      
+      // Step 6: Add a default welcome notice
+      const { error: noticeError } = await supabase
+        .from('forum_posts')
+        .insert({
+          society_id: societyData.id,
+          user_id: authData.user.id,
+          title: `Welcome to ${data.name}!`,
+          content: `Welcome to our society management portal. This is the first announcement in your new society.`,
+          is_admin_post: true,
+          notice_type: 'general',
+          is_pinned: true
+        });
+        
+      if (noticeError) {
+        console.error("Error creating welcome notice:", noticeError);
+        // Don't throw, as this is not critical
       }
       
       toast.success("Society created successfully!");
