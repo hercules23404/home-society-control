@@ -13,13 +13,14 @@ const PropertiesPage = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filter properties for the current tenant
-  const tenantProperties = mockProperties.filter(property => 
-    property.tenant_id === user?.id
+  // Filter properties for the current tenant's society
+  // Instead of filtering by tenant_id (which doesn't exist), we'll filter by society_id
+  const societyProperties = mockProperties.filter(property => 
+    property.society_id === user?.society_id
   );
 
   // Further filter based on search term
-  const filteredProperties = tenantProperties.filter(property => 
+  const filteredProperties = societyProperties.filter(property => 
     property.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     property.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -66,12 +67,13 @@ const PropertiesPage = () => {
               id={property.id}
               title={property.title}
               address={property.address}
-              type={property.type}
+              type={property.type === "rent" ? "rent" : "sale"}
+              price={property.price}
               bedrooms={property.bedrooms}
               bathrooms={property.bathrooms}
-              rent={property.rent}
-              status={property.status}
-              imageUrl={property.imageUrl}
+              area={property.area_sqft}
+              image={property.images[0]}
+              onViewClick={(id) => console.log(`View property ${id}`)}
             />
           ))}
         </div>

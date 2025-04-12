@@ -14,13 +14,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+// Define document types as a union type to match the expected types
+type DocumentType = "identity" | "lease" | "utility" | "other";
+type DocumentStatus = "pending" | "verified" | "rejected";
+
 const DocumentsPage = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentTab, setCurrentTab] = useState("all");
+  const [currentTab, setCurrentTab] = useState<"all" | DocumentType>("all");
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [newDocumentType, setNewDocumentType] = useState("");
+  const [newDocumentType, setNewDocumentType] = useState<DocumentType | "">("");
 
   // Filter documents for the current tenant
   const tenantDocuments = mockDocuments.filter(doc => 
@@ -46,7 +50,7 @@ const DocumentsPage = () => {
     });
 
   // Get unique document types
-  const documentTypes = ["identity", "address", "income", "rental", "other"];
+  const documentTypes: DocumentType[] = ["identity", "lease", "utility", "other"];
 
   const handleUploadDocument = () => {
     // Here we would normally upload the document
@@ -66,7 +70,7 @@ const DocumentsPage = () => {
       </div>
 
       <div className="flex justify-between items-center mb-6">
-        <Tabs value={currentTab} onValueChange={setCurrentTab}>
+        <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as "all" | DocumentType)}>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
             {documentTypes.map(type => (
@@ -96,7 +100,7 @@ const DocumentsPage = () => {
                 <Label htmlFor="document-type">Document Type</Label>
                 <Select
                   value={newDocumentType}
-                  onValueChange={setNewDocumentType}
+                  onValueChange={(value) => setNewDocumentType(value as DocumentType)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select document type" />
@@ -188,11 +192,13 @@ const DocumentsPage = () => {
               key={document.id}
               id={document.id}
               name={document.name}
-              type={document.type}
-              uploaded_at={document.uploaded_at}
-              file_url={document.file_url}
-              status={document.status}
-              comment={document.comment}
+              type={document.type as DocumentType}
+              uploadDate={document.uploaded_at}
+              fileSize={document.file_size}
+              status={document.status as DocumentStatus}
+              onDownload={(id) => console.log(`Downloading document ${id}`)}
+              onView={(id) => console.log(`Viewing document ${id}`)}
+              onDelete={(id) => console.log(`Deleting document ${id}`)}
             />
           ))}
         </div>
