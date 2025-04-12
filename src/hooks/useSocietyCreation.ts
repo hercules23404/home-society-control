@@ -15,7 +15,13 @@ export const useSocietyCreation = () => {
     setIsLoading(true);
     
     try {
-      // Step 1: Create society in Supabase
+      // Step 1: Get current user
+      const { data: authData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) throw userError;
+      if (!authData?.user) throw new Error("User not authenticated");
+      
+      // Step 2: Create society in Supabase
       const { data: societyData, error: societyError } = await supabase
         .from('societies')
         .insert({
@@ -31,12 +37,6 @@ export const useSocietyCreation = () => {
         .single();
       
       if (societyError) throw societyError;
-      
-      // Step 2: Get current user
-      const { data: authData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!authData?.user) throw new Error("User not authenticated");
       
       // Step 3: First ensure user profile has admin role
       const { error: profileError } = await supabase
@@ -60,7 +60,7 @@ export const useSocietyCreation = () => {
         
       if (adminError) {
         console.error("Error adding admin:", adminError);
-        // Continue despite error - thanks to our new RLS policy this shouldn't block
+        throw adminError;
       }
       
       // Step 5: Add utility workers if any
@@ -77,6 +77,7 @@ export const useSocietyCreation = () => {
           
         if (workersError) {
           console.error("Error adding utility workers:", workersError);
+          // We don't throw here to allow society creation to succeed even if worker creation fails
         }
       }
       

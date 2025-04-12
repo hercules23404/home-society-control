@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -54,14 +55,42 @@ const AdminSignup = () => {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     
-    // This is where you'd connect to Supabase for registration
-    // For now, we'll simulate a successful registration
-    setTimeout(() => {
-      console.log("Admin registration details:", data);
+    try {
+      // Step 1: Register the user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) throw authError;
+      
+      if (!authData.user) {
+        throw new Error("User creation failed");
+      }
+
+      // Step 2: Update the user's profile with additional information
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          first_name: data.name.split(' ')[0], // Simple way to split first name
+          last_name: data.name.split(' ').slice(1).join(' '), // Rest is last name
+          phone: data.phone,
+          role: 'admin'
+        })
+        .eq('id', authData.user.id);
+
+      if (profileError) throw profileError;
+
       toast.success("Registration successful!");
       navigate("/admin/create-society");
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast.error("Registration failed", {
+        description: error.message
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
