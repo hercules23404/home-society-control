@@ -88,7 +88,7 @@ const CreateSociety = () => {
     setIsLoading(true);
     
     try {
-      // Create society in Supabase
+      // Step 1: Create society in Supabase
       const { data: societyData, error: societyError } = await supabase
         .from('societies')
         .insert({
@@ -105,32 +105,38 @@ const CreateSociety = () => {
       
       if (societyError) throw societyError;
       
-      // If user is authenticated, add them as admin
-      const { data: authData } = await supabase.auth.getUser();
+      // Step 2: Get current user
+      const { data: authData, error: userError } = await supabase.auth.getUser();
       
-      if (authData?.user) {
-        // Add user as admin for this society
-        const { error: adminError } = await supabase
-          .from('admins')
-          .insert({
-            user_id: authData.user.id,
-            society_id: societyData.id,
-            designation: 'Owner'
-          });
-          
-        if (adminError) {
-          console.error("Error adding admin:", adminError);
-          // Continue despite error adding admin role
-        }
+      if (userError) throw userError;
+      if (!authData?.user) throw new Error("User not authenticated");
+      
+      // Step 3: First ensure user profile has admin role
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('id', authData.user.id);
         
-        // Update user profile to confirm admin role
-        await supabase
-          .from('profiles')
-          .update({ role: 'admin' })
-          .eq('id', authData.user.id);
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        // Continue anyway - the profile might already be an admin
       }
       
-      // Add utility workers if any
+      // Step 4: Create admin record connecting user to society
+      const { error: adminError } = await supabase
+        .from('admins')
+        .insert({
+          user_id: authData.user.id,
+          society_id: societyData.id,
+          designation: 'Owner'
+        });
+        
+      if (adminError) {
+        console.error("Error adding admin:", adminError);
+        // Continue despite error - thanks to our new RLS policy this shouldn't block
+      }
+      
+      // Step 5: Add utility workers if any
       if (utilityWorkers.length > 0 && societyData) {
         const workersToInsert = utilityWorkers.map(worker => ({
           name: worker.name,
@@ -144,7 +150,6 @@ const CreateSociety = () => {
           
         if (workersError) {
           console.error("Error adding utility workers:", workersError);
-          // Continue despite worker errors
         }
       }
       

@@ -538,6 +538,10 @@ export type Database = {
           zip_code: string
         }[]
       }
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       maintenance_status_type:
