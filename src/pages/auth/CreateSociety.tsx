@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,17 @@ const CreateSociety = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { refreshUser } = useAdminAuth();
-  const state = location.state as LocationState;
+  const [state, setState] = useState<LocationState>({});
+  
+  // Extract state from location on component mount
+  useEffect(() => {
+    if (location.state) {
+      console.log("Received state in CreateSociety:", location.state);
+      setState(location.state as LocationState);
+    } else {
+      console.log("No state received in CreateSociety");
+    }
+  }, [location.state]);
 
   // Create admin handler to be passed to SocietyForm
   const handleSocietyCreated = async (societyId: string) => {
@@ -24,6 +34,12 @@ const CreateSociety = () => {
     // create the admin record
     if (state?.userId && state?.designation) {
       try {
+        console.log("Creating admin record with:", {
+          userId: state.userId,
+          designation: state.designation,
+          societyId
+        });
+        
         const { error } = await supabase
           .from('admins')
           .insert({
@@ -45,15 +61,12 @@ const CreateSociety = () => {
           description: error.message
         });
       }
+    } else {
+      console.log("Missing required user information for admin setup");
+      toast.success("Society created successfully!");
+      navigate("/admin/dashboard");
     }
   };
-
-  // Effect to check if we have required state params
-  useEffect(() => {
-    if (!state?.userId && !state?.designation) {
-      console.log("Missing required user information for admin setup");
-    }
-  }, [state]);
 
   return (
     <AuthLayout 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
@@ -99,19 +98,25 @@ const AdminSignup = () => {
 
       console.log("Profile updated successfully");
 
-      // Step 3: After successful signup, redirect to create-society page
-      // The admin record will be created after society creation
+      // Step 3: After successful signup, show success message and redirect to create-society page
       toast.success("Registration successful!");
-      navigate("/admin/create-society", { state: { 
-        userId: authData.user.id,
-        designation: data.designation
-      }});
+      
+      // Force a small delay to ensure the toast is visible before redirecting
+      setTimeout(() => {
+        navigate("/admin/create-society", { 
+          state: { 
+            userId: authData.user.id,
+            designation: data.designation
+          },
+          replace: true // Use replace to prevent back navigation to signup
+        });
+      }, 300);
+      
     } catch (error: any) {
       console.error("Registration error:", error);
       toast.error("Registration failed", {
         description: error.message
       });
-    } finally {
       setIsLoading(false);
     }
   };
