@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -204,10 +205,10 @@ const TenantSignup = () => {
                     value={field.value}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={loading ? "Loading societies..." : "Choose your society"} />
+                      <SelectValue placeholder={societiesLoading ? "Loading societies..." : "Choose your society"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {loading ? (
+                      {societiesLoading ? (
                         <div className="flex items-center justify-center p-2">
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                           <span>Loading...</span>
