@@ -1,7 +1,8 @@
 
 import React from "react";
-import { Building } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Building, Home } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -11,13 +12,26 @@ interface AuthLayoutProps {
 }
 
 const AuthLayout = ({ children, title, subtitle, userType }: AuthLayoutProps) => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-rental-background flex flex-col">
-      <div className="container mx-auto py-4 px-4">
+      <div className="container mx-auto py-4 px-4 relative">
         <Link to="/" className="flex items-center text-rental-primary hover:text-rental-secondary">
           <Building className="h-6 w-6 mr-2" />
           <span className="font-bold text-lg">RentalSystem</span>
         </Link>
+        
+        {/* Home button positioned absolutely in the top right */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute top-4 right-4"
+          onClick={() => navigate('/')}
+        >
+          <Home className="h-6 w-6" />
+          <span className="sr-only">Return to Home</span>
+        </Button>
       </div>
       
       <div className="flex-grow container mx-auto flex flex-col md:flex-row items-center justify-center px-4 py-8">
@@ -99,3 +113,4 @@ const AuthLayout = ({ children, title, subtitle, userType }: AuthLayoutProps) =>
 };
 
 export default AuthLayout;
+
