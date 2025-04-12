@@ -1,6 +1,8 @@
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -9,20 +11,21 @@ interface ProtectedRouteProps {
 
 const RouteProtection = ({ children, requiredRole }: ProtectedRouteProps) => {
   const location = useLocation();
-  const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const { user, userRole, loading } = useAuth();
 
   useEffect(() => {
-    // Here you would typically check with Supabase for authentication status
-    // For now, we'll use localStorage as a placeholder
-    const role = localStorage.getItem('userRole');
-    setUserRole(role);
-    setIsLoading(false);
-  }, []);
+    console.log('RouteProtection: User role:', userRole, 'Required role:', requiredRole);
+  }, [userRole, requiredRole]);
 
-  if (isLoading) {
-    // You could add a loading spinner here
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />
+          <p className="text-rental-text">Loading authentication...</p>
+        </div>
+      </div>
+    );
   }
 
   // For public routes (requiredRole is null), allow access regardless of auth status
@@ -31,14 +34,15 @@ const RouteProtection = ({ children, requiredRole }: ProtectedRouteProps) => {
   }
 
   // If user is not logged in, redirect to login
-  if (!userRole) {
+  if (!user) {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // If specific role is required but user doesn't have it
   if (requiredRole && userRole !== requiredRole) {
     // Redirect tenant to tenant dashboard or admin to admin dashboard
-    return <Navigate to={userRole === 'tenant' ? '/tenant/dashboard' : '/admin/dashboard'} replace />;
+    const redirectPath = userRole === 'tenant' ? '/tenant/dashboard' : '/admin/dashboard';
+    return <Navigate to={redirectPath} replace />;
   }
 
   // User has the required role, allow access

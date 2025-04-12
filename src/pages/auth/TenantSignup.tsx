@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -35,9 +35,17 @@ const signupSchema = z.object({
 });
 
 const TenantSignup = () => {
-  const { societies, fetchSocieties, loading } = useSocietySelection();
+  const { societies, fetchSocieties, loading: societiesLoading } = useSocietySelection();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { signUp, userRole } = useAuth();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userRole === 'tenant') {
+      navigate('/tenant/dashboard');
+    }
+  }, [userRole, navigate]);
 
   const { 
     register, 
@@ -57,7 +65,6 @@ const TenantSignup = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Log societies whenever they change
   useEffect(() => {
     console.log('Societies in component:', societies);
   }, [societies]);
@@ -72,6 +79,12 @@ const TenantSignup = () => {
       });
 
       if (authError) throw authError;
+      
+      if (!authData.user) {
+        throw new Error("User creation failed");
+      }
+      
+      setUserId(authData.user.id);
 
       const { error: profileError } = await supabase
         .from('profiles')
@@ -80,14 +93,14 @@ const TenantSignup = () => {
           last_name: data.lastName,
           role: 'tenant'
         })
-        .eq('id', authData.user?.id);
+        .eq('id', authData.user.id);
 
       if (profileError) throw profileError;
 
       const { error: tenantError } = await supabase
         .from('tenants')
         .insert({
-          user_id: authData.user?.id,
+          user_id: authData.user.id,
           society_id: data.societyId,
           flat_number: '' // Will be updated later
         });
@@ -95,11 +108,11 @@ const TenantSignup = () => {
       if (tenantError) throw tenantError;
 
       toast.success('Account created successfully');
-      navigate('/tenant/dashboard');
     } catch (error: any) {
       toast.error('Signup failed', {
         description: error.message
       });
+      console.error("Signup error:", error);
     } finally {
       setIsSubmitting(false);
     }

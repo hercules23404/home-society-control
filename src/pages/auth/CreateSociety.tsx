@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { SocietyForm } from "@/components/society/SocietyForm";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LocationState {
   userId?: string;
@@ -15,7 +15,7 @@ interface LocationState {
 const CreateSociety = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { refreshUser } = useAdminAuth();
+  const { user, userRole } = useAuth();
   const [state, setState] = useState<LocationState>({});
   
   // Extract state from location on component mount
@@ -25,38 +25,36 @@ const CreateSociety = () => {
       setState(location.state as LocationState);
     } else {
       console.log("No state received in CreateSociety");
-      // If no state but user is already logged in, we can still create a society
-      // They will just need to manually create an admin record later
+      // If no state but user is logged in, we can still create a society
     }
   }, [location.state]);
 
   // Create admin handler to be passed to SocietyForm
   const handleSocietyCreated = async (societyId: string) => {
-    // If we have userId and designation from registration flow,
-    // create the admin record
-    if (state?.userId && state?.designation) {
+    const userId = state?.userId || user?.id;
+    const designation = state?.designation || 'Admin';
+    
+    // If we have userId and designation, create the admin record
+    if (userId) {
       try {
         console.log("Creating admin record with:", {
-          userId: state.userId,
-          designation: state.designation,
+          userId,
+          designation,
           societyId
         });
         
         const { error } = await supabase
           .from('admins')
           .insert({
-            user_id: state.userId,
-            designation: state.designation,
+            user_id: userId,
+            designation: designation,
             society_id: societyId
           });
         
         if (error) throw error;
         
-        // Refresh the user data to include admin status
-        await refreshUser();
-        
         toast.success("Society and admin setup complete!");
-        navigate("/admin/dashboard");
+        navigate("/admin/dashboard", { replace: true });
       } catch (error: any) {
         console.error("Error creating admin:", error);
         toast.error("Failed to complete setup", {
@@ -66,7 +64,7 @@ const CreateSociety = () => {
     } else {
       console.log("Missing required user information for admin setup");
       toast.success("Society created successfully!");
-      navigate("/admin/dashboard");
+      navigate("/admin/dashboard", { replace: true });
     }
   };
 

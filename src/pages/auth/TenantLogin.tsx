@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -10,13 +11,11 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home } from 'lucide-react';
+import { Home, Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -25,6 +24,15 @@ const loginSchema = z.object({
 
 const TenantLogin = () => {
   const navigate = useNavigate();
+  const { signIn, userRole } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect when userRole changes
+  useEffect(() => {
+    if (userRole === 'tenant') {
+      navigate('/tenant/dashboard');
+    }
+  }, [userRole, navigate]);
 
   const { 
     register, 
@@ -35,49 +43,19 @@ const TenantLogin = () => {
   });
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
+    setIsLoading(true);
+    
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password
-      });
-
-      if (authError) throw authError;
-
-      // Check if user is a tenant
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', authData.user?.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (profileData.role !== 'tenant') {
-        await supabase.auth.signOut();
-        throw new Error('Access denied. Please use the correct login method.');
+      const result = await signIn(data.email, data.password);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Login failed');
       }
-
-      // Check if tenant is assigned to a society
-      const { data: tenantData, error: tenantError } = await supabase
-        .from('tenants')
-        .select('society_id')
-        .eq('user_id', authData.user?.id)
-        .single();
-
-      if (tenantError) {
-        toast.error('You are not assigned to a society', {
-          description: 'Please contact your society admin or sign up again.'
-        });
-        await supabase.auth.signOut();
-        return;
-      }
-
-      toast.success('Login successful');
-      navigate('/tenant/dashboard');
+      
+      // The redirection will happen in the useEffect when userRole is updated
     } catch (error: any) {
-      toast.error('Login failed', {
-        description: error.message
-      });
+      console.error("Login error:", error);
+      setIsLoading(false);
     }
   };
 
@@ -130,8 +108,17 @@ const TenantLogin = () => {
               )}
             </div>
 
-            <Button type="submit" className="w-full">
-              Login
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <span>Logging in...</span>
+                </div>
+              ) : "Login"}
             </Button>
 
             <div className="text-center">

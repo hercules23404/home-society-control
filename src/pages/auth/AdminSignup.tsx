@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,9 +37,25 @@ type FormData = z.infer<typeof formSchema>;
 
 const AdminSignup = () => {
   const navigate = useNavigate();
+  const { userRole, signUp } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [designation, setDesignation] = useState<string | null>(null);
+
+  // When userRole changes after signup, navigate accordingly
+  useEffect(() => {
+    if (userRole === 'admin' && userId) {
+      navigate("/admin/create-society", { 
+        state: { 
+          userId,
+          designation
+        },
+        replace: true
+      });
+    }
+  }, [userRole, userId, designation, navigate]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -75,6 +92,8 @@ const AdminSignup = () => {
         throw new Error("User creation failed");
       }
 
+      setUserId(authData.user.id);
+      setDesignation(data.designation);
       console.log("Auth user created successfully:", authData.user.id);
 
       // Step 2: Update the user's profile with additional information
@@ -99,27 +118,16 @@ const AdminSignup = () => {
 
       console.log("Profile updated successfully");
 
-      // Step 3: After successful signup, show success message and redirect
       toast.success("Registration successful!");
       
-      console.log("Redirecting to create-society with user ID:", authData.user.id);
-      
-      // Force a small delay to ensure the toast is visible and state is passed properly
-      setTimeout(() => {
-        navigate("/admin/create-society", { 
-          state: { 
-            userId: authData.user.id,
-            designation: data.designation
-          },
-          replace: true // Use replace to prevent back navigation to signup
-        });
-      }, 500); // Slightly longer delay to ensure state is properly passed
+      // The navigation will happen automatically in the useEffect when userRole is updated
       
     } catch (error: any) {
       console.error("Registration error:", error);
       toast.error("Registration failed", {
         description: error.message
       });
+    } finally {
       setIsLoading(false);
     }
   };

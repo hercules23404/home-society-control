@@ -5,8 +5,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ type FormData = z.infer<typeof formSchema>;
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const { signIn, userRole } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,46 +41,24 @@ const AdminLogin = () => {
     },
   });
 
+  // When userRole changes after login, navigate accordingly
+  useState(() => {
+    if (userRole === 'admin') {
+      navigate("/admin/dashboard");
+    }
+  });
+
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     
     try {
-      // Step 1: Sign in with Supabase Auth
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
+      const result = await signIn(data.email, data.password);
 
-      if (error) throw error;
-      
-      // Step 2: Use our RPC function for role check instead of direct query
-      // This uses the security definer function we just created
-      const { data: userRole, error: roleError } = await supabase
-        .rpc('get_user_role');
-        
-      if (roleError) throw roleError;
-      
-      if (userRole !== 'admin') {
-        throw new Error('This account does not have admin privileges');
+      if (!result.success) {
+        throw new Error(result.error || 'Login failed');
       }
 
-      // Step 3: Check if user is associated with a society
-      const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('user_id', authData.user.id);
-
-      if (adminError) throw adminError;
-
-      toast.success("Login successful!");
-      
-      if (adminData && adminData.length > 0) {
-        // Admin is associated with a society, redirect to dashboard
-        navigate("/admin/dashboard");
-      } else {
-        // Admin needs to create or join a society
-        navigate("/admin/create-society");
-      }
+      // The navigation will happen automatically once the auth context updates the userRole
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error("Login failed", {
@@ -153,7 +132,12 @@ const AdminLogin = () => {
             className="w-full bg-rental-primary hover:bg-rental-secondary"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <span>Logging in...</span>
+              </div>
+            ) : "Login"}
           </Button>
         </form>
       </Form>
