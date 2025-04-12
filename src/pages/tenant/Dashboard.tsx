@@ -82,7 +82,7 @@ const TenantDashboard = () => {
                   title={notice.title}
                   content={notice.content}
                   date={notice.date}
-                  category={notice.category}
+                  category={notice.category as "general" | "maintenance" | "events" | "emergency"}
                 />
               ))}
             </div>
@@ -107,7 +107,7 @@ const TenantDashboard = () => {
                     id={request.id}
                     title={request.title}
                     description={request.description}
-                    status={request.status}
+                    status={request.status as "pending" | "in-progress" | "resolved" | "rejected"}
                     date={request.date}
                     category={request.category}
                     assignedTo={request.assignedTo}
