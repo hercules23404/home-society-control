@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,13 @@ const AdminSignup = () => {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
+        options: {
+          data: {
+            full_name: data.name,
+            phone: data.phone,
+            designation: data.designation
+          }
+        }
       });
 
       if (authError) throw authError;
@@ -66,6 +74,8 @@ const AdminSignup = () => {
       if (!authData.user) {
         throw new Error("User creation failed");
       }
+
+      console.log("Auth user created successfully:", authData.user.id);
 
       // Step 2: Update the user's profile with additional information
       const nameParts = data.name.split(' ');
@@ -82,12 +92,15 @@ const AdminSignup = () => {
         })
         .eq('id', authData.user.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+        throw profileError;
+      }
 
-      // Step 3: After successful signup, we'll redirect to create-society page
+      console.log("Profile updated successfully");
+
+      // Step 3: After successful signup, redirect to create-society page
       // The admin record will be created after society creation
-      // This avoids the society_id requirement issue
-
       toast.success("Registration successful!");
       navigate("/admin/create-society", { state: { 
         userId: authData.user.id,
@@ -244,7 +257,12 @@ const AdminSignup = () => {
             className="w-full bg-rental-primary hover:bg-rental-secondary"
             disabled={isLoading}
           >
-            {isLoading ? "Creating Account..." : "Sign Up"}
+            {isLoading ? (
+              <div className="flex items-center">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <span>Creating Account...</span>
+              </div>
+            ) : "Sign Up"}
           </Button>
         </form>
       </Form>
