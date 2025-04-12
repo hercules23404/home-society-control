@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AdminAuthProvider } from "@/hooks/useAdminAuth";
 import { AuthProvider } from "@/hooks/useAuth";
+import RouteProtection from "@/components/auth/RouteProtection";
+import AdminRouteProtection from "@/components/auth/AdminRouteProtection";
 
 // Landing page
 import Index from "./pages/Index";
@@ -26,6 +28,8 @@ import TenantRequests from "./pages/tenant/Requests";
 import TenantPayments from "./pages/tenant/Payments";
 import TenantForum from "./pages/tenant/Forum";
 import TenantDocuments from "./pages/tenant/Documents";
+import TenantProfile from "./pages/tenant/Profile";
+import TenantServiceRequestCreate from "./pages/tenant/ServiceRequestCreate";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -37,8 +41,16 @@ import DocumentsPage from "./pages/admin/Documents";
 import SocietyPage from "./pages/admin/Society";
 import ForumPage from "./pages/admin/Forum";
 import PaymentsPage from "./pages/admin/Payments";
+import AdminCreateNotice from "./pages/admin/CreateNotice";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -59,25 +71,161 @@ const App = () => (
               <Route path="/admin/signup" element={<AdminSignup />} />
               <Route path="/admin/create-society" element={<CreateSociety />} />
               
-              {/* Tenant routes - no protection */}
-              <Route path="/tenant/dashboard" element={<TenantDashboard />} />
-              <Route path="/tenant/notices" element={<TenantNotices />} />
-              <Route path="/tenant/properties" element={<TenantProperties />} />
-              <Route path="/tenant/requests" element={<TenantRequests />} />
-              <Route path="/tenant/payments" element={<TenantPayments />} />
-              <Route path="/tenant/forum" element={<TenantForum />} />
-              <Route path="/tenant/documents" element={<TenantDocuments />} />
+              {/* Tenant routes - protected */}
+              <Route
+                path="/tenant/dashboard"
+                element={
+                  <RouteProtection requiredRole="tenant">
+                    <TenantDashboard />
+                  </RouteProtection>
+                }
+              />
+              <Route
+                path="/tenant/notices"
+                element={
+                  <RouteProtection requiredRole="tenant">
+                    <TenantNotices />
+                  </RouteProtection>
+                }
+              />
+              <Route
+                path="/tenant/properties"
+                element={
+                  <RouteProtection requiredRole="tenant">
+                    <TenantProperties />
+                  </RouteProtection>
+                }
+              />
+              <Route
+                path="/tenant/requests"
+                element={
+                  <RouteProtection requiredRole="tenant">
+                    <TenantRequests />
+                  </RouteProtection>
+                }
+              />
+              <Route
+                path="/tenant/requests/new"
+                element={
+                  <RouteProtection requiredRole="tenant">
+                    <TenantServiceRequestCreate />
+                  </RouteProtection>
+                }
+              />
+              <Route
+                path="/tenant/payments"
+                element={
+                  <RouteProtection requiredRole="tenant">
+                    <TenantPayments />
+                  </RouteProtection>
+                }
+              />
+              <Route
+                path="/tenant/forum"
+                element={
+                  <RouteProtection requiredRole="tenant">
+                    <TenantForum />
+                  </RouteProtection>
+                }
+              />
+              <Route
+                path="/tenant/documents"
+                element={
+                  <RouteProtection requiredRole="tenant">
+                    <TenantDocuments />
+                  </RouteProtection>
+                }
+              />
+              <Route
+                path="/tenant/profile"
+                element={
+                  <RouteProtection requiredRole="tenant">
+                    <TenantProfile />
+                  </RouteProtection>
+                }
+              />
               
-              {/* Admin routes - no protection */}
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/tenants" element={<TenantsPage />} />
-              <Route path="/admin/requests" element={<RequestsPage />} />
-              <Route path="/admin/notices" element={<NoticesPage />} />
-              <Route path="/admin/properties" element={<PropertiesPage />} />
-              <Route path="/admin/documents" element={<DocumentsPage />} />
-              <Route path="/admin/society" element={<SocietyPage />} />
-              <Route path="/admin/forum" element={<ForumPage />} />
-              <Route path="/admin/payments" element={<PaymentsPage />} />
+              {/* Admin routes - protected */}
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <AdminRouteProtection>
+                    <AdminDashboard />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/tenants"
+                element={
+                  <AdminRouteProtection>
+                    <TenantsPage />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/requests"
+                element={
+                  <AdminRouteProtection>
+                    <RequestsPage />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/notices"
+                element={
+                  <AdminRouteProtection>
+                    <NoticesPage />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/notices/create"
+                element={
+                  <AdminRouteProtection>
+                    <AdminCreateNotice />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/properties"
+                element={
+                  <AdminRouteProtection>
+                    <PropertiesPage />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/documents"
+                element={
+                  <AdminRouteProtection>
+                    <DocumentsPage />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/society"
+                element={
+                  <AdminRouteProtection>
+                    <SocietyPage />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/forum"
+                element={
+                  <AdminRouteProtection>
+                    <ForumPage />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/payments"
+                element={
+                  <AdminRouteProtection>
+                    <PaymentsPage />
+                  </AdminRouteProtection>
+                }
+              />
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />

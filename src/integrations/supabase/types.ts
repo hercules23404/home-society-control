@@ -12,27 +12,24 @@ export type Database = {
       admins: {
         Row: {
           created_at: string | null
-          designation: string | null
-          is_active: boolean | null
-          society_id: string
-          updated_at: string | null
-          user_id: string
+          id: string
+          is_super_admin: boolean | null
+          society_id: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          designation?: string | null
-          is_active?: boolean | null
-          society_id: string
-          updated_at?: string | null
-          user_id: string
+          id?: string
+          is_super_admin?: boolean | null
+          society_id?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          designation?: string | null
-          is_active?: boolean | null
-          society_id?: string
-          updated_at?: string | null
-          user_id?: string
+          id?: string
+          is_super_admin?: boolean | null
+          society_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -440,28 +437,31 @@ export type Database = {
       }
       tenants: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
-          flat_number: string
-          is_active: boolean | null
-          society_id: string
-          updated_at: string | null
-          user_id: string
+          flat_number: string | null
+          id: string
+          phone_number: string | null
+          society_id: string | null
+          user_id: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
-          flat_number: string
-          is_active?: boolean | null
-          society_id: string
-          updated_at?: string | null
-          user_id: string
+          flat_number?: string | null
+          id?: string
+          phone_number?: string | null
+          society_id?: string | null
+          user_id?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
-          flat_number?: string
-          is_active?: boolean | null
-          society_id?: string
-          updated_at?: string | null
-          user_id?: string
+          flat_number?: string | null
+          id?: string
+          phone_number?: string | null
+          society_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {

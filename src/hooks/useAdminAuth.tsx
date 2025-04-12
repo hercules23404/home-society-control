@@ -1,28 +1,8 @@
 
-import { createContext, useContext, ReactNode } from 'react';
-
-// Detailed mock society data
-const mockSociety = {
-  id: 'test-society-id',
-  name: 'Green Valley Apartments',
-  address: '123 Park Avenue',
-  city: 'Mumbai',
-  state: 'Maharashtra',
-  zip: '400001',
-  total_units: 100,
-  amenities: ['Swimming Pool', 'Gym', 'Community Hall', 'Gardens', 'CCTV Surveillance'],
-  description: 'A premium residential society in the heart of Mumbai'
-};
-
-// Mock admin data
-const mockAdmin = {
-  id: 'test-admin-id', 
-  email: 'admin@example.com',
-  name: 'Rahul Sharma',
-  phone: '+91 98765 43210',
-  role: 'admin',
-  designation: 'Society Manager'
-};
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface AdminAuthContextType {
   user: any | null;
@@ -34,28 +14,101 @@ interface AdminAuthContextType {
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType>({
-  user: mockAdmin,
-  isAdmin: true,
-  loading: false,
-  society: mockSociety,
+  user: null,
+  isAdmin: false,
+  loading: true,
+  society: null,
   signOut: async () => {},
   refreshUser: async () => {},
 });
 
 export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
-  // Mock functions
-  const signOut = async () => {};
-  const refreshUser = async () => {};
-
+  const { user: authUser, userRole, loading: authLoading, signOut: authSignOut } = useAuth();
+  const [user, setUser] = useState<any>(null);
+  const [society, setSociety] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      setLoading(true);
+      
+      if (!authUser || userRole !== 'admin') {
+        setUser(null);
+        setSociety(null);
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        // Fetch admin data
+        const { data: adminData, error } = await supabase
+          .from('admins')
+          .select(`
+            *,
+            societies:society_id (*)
+          `)
+          .eq('user_id', authUser.id)
+          .single();
+        
+        if (error || !adminData) {
+          console.error('Error fetching admin data:', error);
+          setUser(null);
+          setSociety(null);
+        } else {
+          setUser(adminData);
+          setSociety(adminData.societies);
+        }
+      } catch (error) {
+        console.error('Error in admin auth check:', error);
+        setUser(null);
+        setSociety(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (!authLoading) {
+      checkAdminStatus();
+    }
+  }, [authUser, userRole, authLoading]);
+  
+  const signOut = async () => {
+    await authSignOut();
+    navigate('/admin/login');
+  };
+  
+  const refreshUser = async () => {
+    if (!authUser?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('admins')
+        .select(`
+          *,
+          societies:society_id (*)
+        `)
+        .eq('user_id', authUser.id)
+        .single();
+      
+      if (error) throw error;
+      
+      setUser(data);
+      setSociety(data.societies);
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+  };
+  
   const value = {
-    user: mockAdmin,
-    isAdmin: true,
-    loading: false,
-    society: mockSociety,
+    user,
+    isAdmin: !!user && userRole === 'admin',
+    loading: authLoading || loading,
+    society,
     signOut,
     refreshUser,
   };
-
+  
   return (
     <AdminAuthContext.Provider value={value}>
       {children}
