@@ -31,7 +31,7 @@ import {
   Upload,
   FileSpreadsheet,
   FileImage,
-  FilePdf,
+  File,
   Filter,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -119,7 +119,7 @@ const DocumentsPage = () => {
   const getDocumentIcon = (type: string) => {
     switch (type) {
       case "pdf":
-        return <FilePdf className="h-5 w-5 text-red-500" />;
+        return <File className="h-5 w-5 text-red-500" />;
       case "doc":
         return <FileText className="h-5 w-5 text-blue-500" />;
       case "xlsx":
@@ -170,7 +170,7 @@ const DocumentsPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-md">
-              <FilePdf className="h-5 w-5" />
+              <File className="h-5 w-5" />
               <div>
                 <div className="text-sm font-medium">Legal Documents</div>
                 <div className="text-2xl font-bold">

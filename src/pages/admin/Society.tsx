@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import {
   Card,
@@ -22,8 +22,8 @@ import {
   PenSquare,
 } from "lucide-react";
 
-import AmenitiesSection from "@/components/society/AmenitiesSection";
-import UtilityWorkersSection from "@/components/society/UtilityWorkersSection";
+import { AmenitiesSection } from "@/components/society/AmenitiesSection";
+import { UtilityWorkersSection } from "@/components/society/UtilityWorkersSection";
 
 // Mock data
 const mockSociety = {
@@ -97,6 +97,9 @@ const mockSociety = {
 };
 
 const SocietyPage = () => {
+  const [amenities, setAmenities] = useState(mockSociety.amenities);
+  const [utilityWorkers, setUtilityWorkers] = useState(mockSociety.utilityWorkers);
+
   return (
     <DashboardLayout role="admin">
       <div className="mb-8">
@@ -208,11 +211,19 @@ const SocietyPage = () => {
         </TabsContent>
         
         <TabsContent value="amenities">
-          <AmenitiesSection amenities={mockSociety.amenities} />
+          <Card>
+            <CardContent className="p-4">
+              <AmenitiesSection amenities={amenities} setAmenities={setAmenities} />
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="utility-workers">
-          <UtilityWorkersSection utilityWorkers={mockSociety.utilityWorkers} />
+          <Card>
+            <CardContent className="p-4">
+              <UtilityWorkersSection utilityWorkers={utilityWorkers} setUtilityWorkers={setUtilityWorkers} />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </DashboardLayout>
