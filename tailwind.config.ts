@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom colors for rental system
+				rental: {
+					primary: '#1e40af', // deep blue
+					secondary: '#3b82f6', // medium blue
+					accent: '#93c5fd', // light blue
+					background: '#f8fafc', // off-white
+					card: '#ffffff', // white
+					text: '#0f172a', // dark blue/black
+					'text-light': '#64748b', // gray
+					success: '#10b981', // green
+					warning: '#f59e0b', // amber
+					error: '#ef4444', // red
 				}
 			},
 			borderRadius: {
