@@ -10,7 +10,6 @@ import { Loader2 } from "lucide-react";
 
 interface LocationState {
   userId?: string;
-  designation?: string;
   fromSignup?: boolean;
 }
 
@@ -53,27 +52,62 @@ const CreateSociety = () => {
     
     try {
       const userId = state?.userId || user?.id;
-      const designation = state?.designation || 'Admin';
       
-      // If we have userId and designation, create the admin record
+      // If we have userId, update the admin's profile with society_id
       if (userId) {
-        console.log("Creating admin record with:", {
+        console.log("Updating admin profile with society ID:", {
           userId,
-          designation,
           societyId
         });
         
-        const { error } = await supabase
+        // Update the user's profile with society_id
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            society_id: societyId,
+            role: 'admin'
+          })
+          .eq('id', userId);
+        
+        if (profileError) {
+          console.error("Error updating profile:", profileError);
+          throw profileError;
+        }
+        
+        // Check if admin record exists
+        const { data: existingAdmin } = await supabase
           .from('admins')
-          .insert({
-            user_id: userId,
-            designation: designation,
-            society_id: societyId
-          });
+          .select()
+          .eq('user_id', userId)
+          .single();
+          
+        if (!existingAdmin) {
+          // Create admin record if it doesn't exist
+          const { error: adminError } = await supabase
+            .from('admins')
+            .insert({
+              user_id: userId,
+              society_id: societyId
+            });
+            
+          if (adminError) {
+            console.error("Error creating admin record:", adminError);
+            throw adminError;
+          }
+        } else {
+          // Update existing admin record
+          const { error: adminUpdateError } = await supabase
+            .from('admins')
+            .update({ society_id: societyId })
+            .eq('user_id', userId);
+            
+          if (adminUpdateError) {
+            console.error("Error updating admin record:", adminUpdateError);
+            throw adminUpdateError;
+          }
+        }
         
-        if (error) throw error;
-        
-        toast.success("Society and admin setup complete!");
+        toast.success("Society setup complete!");
         
         // Refresh the session to make sure all changes are reflected
         await supabase.auth.refreshSession();
@@ -87,9 +121,9 @@ const CreateSociety = () => {
         });
       }
     } catch (error: any) {
-      console.error("Error creating admin:", error);
+      console.error("Society creation error:", error);
       toast.error("Failed to complete setup", {
-        description: error.message || "An error occurred during society setup"
+        description: error.message || "An unexpected error occurred"
       });
     } finally {
       setIsProcessing(false);

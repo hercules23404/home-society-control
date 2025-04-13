@@ -199,10 +199,12 @@ export type Database = {
           created_at: string | null
           email: string
           first_name: string | null
+          flat_number: string | null
           id: string
           last_name: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          society_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -210,10 +212,12 @@ export type Database = {
           created_at?: string | null
           email: string
           first_name?: string | null
+          flat_number?: string | null
           id: string
           last_name?: string | null
           phone?: string | null
           role: Database["public"]["Enums"]["user_role"]
+          society_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -221,13 +225,23 @@ export type Database = {
           created_at?: string | null
           email?: string
           first_name?: string | null
+          flat_number?: string | null
           id?: string
           last_name?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          society_id?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       properties: {
         Row: {

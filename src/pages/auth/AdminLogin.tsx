@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 import { Input } from "@/components/ui/input";
@@ -81,9 +81,19 @@ const AdminLogin = () => {
   return (
     <AuthLayout 
       title="Admin Login" 
-      subtitle="Manage your society and residents"
+      subtitle="Access your society management dashboard"
       userType="admin"
     >
+      <Button
+        variant="ghost"
+        size="sm"
+        className="mb-6 flex items-center text-sm text-muted-foreground gap-1"
+        onClick={() => navigate('/admin-auth')}
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Back to options
+      </Button>
+      
       {showAuthLoader ? (
         <div className="flex justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-rental-primary" />

@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Building, Users, Wrench, FileText, LogIn, UserRound } from "lucide-react";
+import { Building, Users, Wrench, FileText, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -21,16 +21,6 @@ const Hero = () => {
                 asChild
                 size="lg"
                 className="bg-white text-rental-primary hover:bg-blue-100 w-full sm:w-auto group transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg"
-              >
-                <Link to="/tenant/login" className="flex items-center gap-2">
-                  <UserRound className="h-5 w-5 group-hover:rotate-6" />
-                  Tenant Login
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                className="bg-rental-secondary text-white hover:bg-rental-primary w-full sm:w-auto group transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg border border-white/20"
               >
                 <Link to="/admin/login" className="flex items-center gap-2">
                   <LogIn className="h-5 w-5 group-hover:-rotate-6" />

@@ -15,8 +15,8 @@ import NotFound from "./pages/NotFound";
 
 // Auth pages
 import TenantLogin from "./pages/auth/TenantLogin";
-import TenantSignup from "./pages/auth/TenantSignup";
 import AdminLogin from "./pages/auth/AdminLogin";
+import AdminAuthLanding from "./pages/auth/AdminAuthLanding";
 import AdminSignup from "./pages/auth/AdminSignup";
 import CreateSociety from "./pages/auth/CreateSociety";
 
@@ -42,6 +42,7 @@ import SocietyPage from "./pages/admin/Society";
 import ForumPage from "./pages/admin/Forum";
 import PaymentsPage from "./pages/admin/Payments";
 import AdminCreateNotice from "./pages/admin/CreateNotice";
+import AddTenants from "./pages/admin/AddTenants";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,7 +67,7 @@ const App = () => (
               
               {/* Authentication routes - no protection */}
               <Route path="/tenant/login" element={<TenantLogin />} />
-              <Route path="/tenant/signup" element={<TenantSignup />} />
+              <Route path="/admin-auth" element={<AdminAuthLanding />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/signup" element={<AdminSignup />} />
               <Route path="/admin/create-society" element={<CreateSociety />} />
@@ -159,6 +160,14 @@ const App = () => (
                 element={
                   <AdminRouteProtection>
                     <TenantsPage />
+                  </AdminRouteProtection>
+                }
+              />
+              <Route
+                path="/admin/add-tenants"
+                element={
+                  <AdminRouteProtection>
+                    <AddTenants />
                   </AdminRouteProtection>
                 }
               />

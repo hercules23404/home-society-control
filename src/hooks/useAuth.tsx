@@ -58,6 +58,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } else {
           setUserRole(null);
           setSociety(null);
+          setLoading(false);
         }
       }
     );
@@ -84,58 +85,47 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setLoading(true);
       
-      // First check if the user is a tenant
-      const { data: tenantData, error: tenantError } = await supabase
-        .from('tenants')
+      // Fetch user profile data from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
         .select(`
           *,
           societies:society_id (
-            id, name, address, city, state, zip_code
+            id, name, address, city, state, zip_code, amenities, total_units
           )
         `)
-        .eq('user_id', userId)
+        .eq('id', userId)
         .single();
-
-      if (tenantData) {
-        setUserRole('tenant');
-        setSociety(tenantData.societies);
-        setUser(prev => ({
-          ...prev,
-          ...tenantData,
-          flat_number: tenantData.flat_number,
-          society_id: tenantData.society_id,
-        }));
-        setLoading(false);
-        return;
-      }
-
-      // If not a tenant, check if admin
-      const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select(`
-          *,
-          societies:society_id (
-            id, name, address, city, state, zip_code
-          )
-        `)
-        .eq('user_id', userId)
-        .single();
-
-      if (adminData) {
-        setUserRole('admin');
-        setSociety(adminData.societies);
-        setUser(prev => ({
-          ...prev,
-          ...adminData,
-          society_id: adminData.society_id,
-        }));
+        
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
         setLoading(false);
         return;
       }
       
-      // If reached here, user has no role assigned
-      console.log('User has no role assigned');
-      setUserRole(null);
+      if (profileData) {
+        // Set user role based on profile data
+        setUserRole(profileData.role as UserRole);
+        setSociety(profileData.societies);
+        
+        // Update user object with profile data
+        setUser(prev => ({
+          ...prev,
+          ...profileData,
+          society_id: profileData.society_id,
+          fullName: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || prev.email
+        }));
+        
+        console.log('Profile data loaded:', {
+          role: profileData.role,
+          societyId: profileData.society_id
+        });
+      } else {
+        // No profile data found, user has no role assigned
+        console.log('User has no profile data');
+        setUserRole(null);
+      }
+      
       setLoading(false);
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -166,7 +156,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email,
         password,
         options: {
-          data: userData,
+          data: {
+            ...userData,
+            role: userData?.role || 'admin' // Default to admin for the new flow
+          }
         }
       });
 
@@ -197,21 +190,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       if (!user?.id) throw new Error('No user logged in');
 
-      if (userRole === 'tenant') {
-        const { error } = await supabase
-          .from('tenants')
-          .update(data)
-          .eq('user_id', user.id);
+      // Update profile data
+      const { error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', user.id);
 
-        if (error) throw error;
-      } else if (userRole === 'admin') {
-        const { error } = await supabase
-          .from('admins')
-          .update(data)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       // Update local state
       setUser(prev => ({
