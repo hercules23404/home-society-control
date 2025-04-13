@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Building, Users, Wrench, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,15 +19,14 @@ const Hero = () => {
               <Button
                 asChild
                 size="lg"
-                className="bg-white text-rental-primary hover:bg-blue-100"
+                className="bg-white text-rental-primary hover:bg-blue-100 w-full sm:w-auto"
               >
                 <Link to="/tenant/login">Tenant Login</Link>
               </Button>
               <Button
                 asChild
                 size="lg"
-                variant="outline"
-                className="border-white text-white hover:bg-white/20 hover:text-rental-primary"
+                className="bg-rental-secondary text-white hover:bg-rental-primary w-full sm:w-auto"
               >
                 <Link to="/admin/login">Admin Login</Link>
               </Button>
