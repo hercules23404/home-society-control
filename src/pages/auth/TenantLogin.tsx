@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -28,13 +27,17 @@ const TenantLogin = () => {
   const { signIn, user, userRole, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect when userRole changes
   useEffect(() => {
-    if (user && userRole === 'tenant') {
-      navigate('/tenant/dashboard', { replace: true });
-    } else if (user && userRole === 'admin') {
-      // If an admin tries to access tenant login, redirect them
-      navigate('/admin/dashboard', { replace: true });
+    console.log("Auth state changed in TenantLogin:", { user: !!user, userRole });
+    
+    if (user) {
+      if (userRole === 'tenant') {
+        console.log("Redirecting authenticated tenant to dashboard");
+        navigate('/tenant/dashboard', { replace: true });
+      } else if (userRole === 'admin') {
+        console.log("Admin detected, redirecting to admin dashboard");
+        navigate('/admin/dashboard', { replace: true });
+      }
     }
   }, [user, userRole, navigate]);
 
@@ -58,7 +61,6 @@ const TenantLogin = () => {
         throw new Error(result.error || 'Login failed');
       }
       
-      // The redirection will happen in the useEffect when userRole is updated by AuthContext
       toast.success('Login successful! Redirecting...');
     } catch (error: any) {
       console.error("Login error:", error);
@@ -70,10 +72,8 @@ const TenantLogin = () => {
     }
   };
 
-  // Show form if: not currently submitting AND (either not authLoading OR we know there's no user)
   const shouldShowForm = !isLoading && (!authLoading || user === null);
   
-  // Only show the auth loader when we're checking a previously logged-in user
   const showAuthLoader = authLoading && user !== null;
 
   console.log("TenantLogin render state:", { authLoading, isLoading, user: !!user, shouldShowForm, showAuthLoader });
