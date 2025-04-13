@@ -58,39 +58,79 @@ const CreateSociety = () => {
         throw new Error("No user ID available");
       }
       
-      console.log("Updating admin profile with society ID:", {
-        userId,
-        societyId
-      });
+      console.log("Processing society ID:", societyId);
+      console.log("For user ID:", userId);
       
-      // Update the user's profile with society_id
-      const { error: profileError } = await supabase
+      // Step 1: Check if the user has a profile
+      const { data: existingProfile, error: profileCheckError } = await supabase
         .from('profiles')
-        .update({
-          society_id: societyId,
-          role: 'admin'
-        })
-        .eq('id', userId);
-      
-      if (profileError) {
-        console.error("Error updating profile:", profileError);
-        throw profileError;
+        .select('id, role')
+        .eq('id', userId)
+        .single();
+        
+      if (profileCheckError) {
+        console.error("Error checking profile existence:", profileCheckError);
+        
+        // Profile doesn't exist, create one
+        if (profileCheckError.code === 'PGRST116') { // Code for no rows returned
+          console.log("Profile not found, creating one...");
+          
+          const { error: createProfileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              email: user?.email || '',
+              role: 'admin',
+              society_id: societyId
+            });
+            
+          if (createProfileError) {
+            console.error("Error creating profile:", createProfileError);
+            throw new Error("Failed to create user profile");
+          }
+          
+          console.log("Profile created successfully");
+        } else {
+          throw profileCheckError;
+        }
+      } else {
+        // Profile exists, update it with society_id
+        console.log("Updating existing profile with society ID:", {
+          userId,
+          societyId,
+          existingProfile
+        });
+        
+        const { error: updateProfileError } = await supabase
+          .from('profiles')
+          .update({
+            society_id: societyId,
+            role: 'admin'
+          })
+          .eq('id', userId);
+        
+        if (updateProfileError) {
+          console.error("Error updating profile:", updateProfileError);
+          throw updateProfileError;
+        }
+        
+        console.log("Profile updated successfully");
       }
-      console.log("Profile updated successfully");
       
-      // Check if admin record exists
-      const { data: existingAdmin, error: checkError } = await supabase
+      // Step 2: Check if admin record exists
+      const { data: existingAdmin, error: checkAdminError } = await supabase
         .from('admins')
-        .select()
+        .select('*')
         .eq('user_id', userId);
         
-      if (checkError) {
-        console.error("Error checking admin record:", checkError);
-        throw checkError;
+      if (checkAdminError) {
+        console.error("Error checking admin record:", checkAdminError);
+        throw checkAdminError;
       }
       
       if (!existingAdmin || existingAdmin.length === 0) {
         // Create admin record if it doesn't exist
+        console.log("Creating admin record...");
         const { error: adminError } = await supabase
           .from('admins')
           .insert({
@@ -105,6 +145,7 @@ const CreateSociety = () => {
         console.log("Admin record created successfully");
       } else {
         // Update existing admin record
+        console.log("Updating admin record...");
         const { error: adminUpdateError } = await supabase
           .from('admins')
           .update({ society_id: societyId })

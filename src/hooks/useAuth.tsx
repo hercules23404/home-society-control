@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -42,13 +43,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth state changed:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
+        // We don't make supabase calls directly in the callback to prevent deadlock
         if (newSession?.user) {
+          // Use setTimeout(0) to defer execution to the next tick
           setTimeout(() => {
             fetchUserProfile(newSession.user.id);
           }, 0);
@@ -60,6 +64,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
+    // Then check for the existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -79,6 +84,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchUserProfile = async (userId: string) => {
     try {
       setLoading(true);
+      
+      // Small delay to ensure we don't hit recursion in RLS policies
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')

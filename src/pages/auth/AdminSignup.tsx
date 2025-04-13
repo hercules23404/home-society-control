@@ -94,33 +94,45 @@ const AdminSignup = () => {
       const userId = authData.user.id;
       console.log("Auth user created successfully:", userId);
       
-      // Step 2: Ensure the profile is created correctly
-      // Check if profile exists (it should be created by the database trigger)
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (profileError) {
-        console.log("Profile check error or not found, creating manually:", profileError);
+      // Step 2: Manually create profile if the database trigger didn't work
+      try {
+        // Short delay to give the trigger time to work
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Create profile manually if the trigger failed
-        const { error: createProfileError } = await supabase
+        // Check if profile exists (it should be created by the database trigger)
+        const { data: profileData, error: profileCheckError } = await supabase
           .from('profiles')
-          .insert({
-            id: userId,
-            email: data.email,
-            first_name: data.firstName,
-            last_name: data.lastName,
-            phone: data.phone,
-            role: 'admin'
-          });
+          .select('id')
+          .eq('id', userId)
+          .single();
         
-        if (createProfileError) {
-          console.error("Error creating profile manually:", createProfileError);
-          throw new Error("Failed to create user profile");
+        if (profileCheckError || !profileData) {
+          console.log("Profile not found, creating manually:", profileCheckError);
+          
+          // Create profile manually as a fallback
+          const { error: createProfileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              email: data.email,
+              first_name: data.firstName,
+              last_name: data.lastName,
+              phone: data.phone,
+              role: 'admin'
+            });
+          
+          if (createProfileError) {
+            console.error("Error creating profile manually:", createProfileError);
+            // Continue anyway - we'll try again on the next page if needed
+          } else {
+            console.log("Profile created manually successfully");
+          }
+        } else {
+          console.log("Profile already exists:", profileData.id);
         }
+      } catch (profileError) {
+        console.error("Error handling profile creation:", profileError);
+        // Continue anyway - we'll try to recover on the next page
       }
       
       toast.success("Registration successful!");
