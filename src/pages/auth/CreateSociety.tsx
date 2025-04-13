@@ -54,77 +54,77 @@ const CreateSociety = () => {
     try {
       const userId = state?.userId || user?.id;
       
-      // If we have userId, update the admin's profile with society_id
-      if (userId) {
-        console.log("Updating admin profile with society ID:", {
-          userId,
-          societyId
-        });
-        
-        // Update the user's profile with society_id
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            society_id: societyId,
-            role: 'admin'
-          })
-          .eq('id', userId);
-        
-        if (profileError) {
-          console.error("Error updating profile:", profileError);
-          throw profileError;
-        }
-        console.log("Profile updated successfully");
-        
-        // Check if admin record exists
-        const { data: existingAdmin } = await supabase
-          .from('admins')
-          .select()
-          .eq('user_id', userId)
-          .single();
-          
-        if (!existingAdmin) {
-          // Create admin record if it doesn't exist
-          const { error: adminError } = await supabase
-            .from('admins')
-            .insert({
-              user_id: userId,
-              society_id: societyId
-            });
-            
-          if (adminError) {
-            console.error("Error creating admin record:", adminError);
-            throw adminError;
-          }
-          console.log("Admin record created successfully");
-        } else {
-          // Update existing admin record
-          const { error: adminUpdateError } = await supabase
-            .from('admins')
-            .update({ society_id: societyId })
-            .eq('user_id', userId);
-            
-          if (adminUpdateError) {
-            console.error("Error updating admin record:", adminUpdateError);
-            throw adminUpdateError;
-          }
-          console.log("Admin record updated successfully");
-        }
-        
-        toast.success("Society setup complete!");
-        
-        // Refresh the session to make sure all changes are reflected
-        await supabase.auth.refreshSession();
-        console.log("Session refreshed");
-        
-        // Navigate to dashboard with replace to prevent going back to create society
-        navigate("/admin/dashboard", { replace: true });
-      } else {
-        console.error("Missing required user information for admin setup");
-        toast.error("Failed to complete setup", {
-          description: "User information is missing. Please try again or contact support."
-        });
+      if (!userId) {
+        throw new Error("No user ID available");
       }
+      
+      console.log("Updating admin profile with society ID:", {
+        userId,
+        societyId
+      });
+      
+      // Update the user's profile with society_id
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          society_id: societyId,
+          role: 'admin'
+        })
+        .eq('id', userId);
+      
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        throw profileError;
+      }
+      console.log("Profile updated successfully");
+      
+      // Check if admin record exists
+      const { data: existingAdmin, error: checkError } = await supabase
+        .from('admins')
+        .select()
+        .eq('user_id', userId);
+        
+      if (checkError) {
+        console.error("Error checking admin record:", checkError);
+        throw checkError;
+      }
+      
+      if (!existingAdmin || existingAdmin.length === 0) {
+        // Create admin record if it doesn't exist
+        const { error: adminError } = await supabase
+          .from('admins')
+          .insert({
+            user_id: userId,
+            society_id: societyId
+          });
+          
+        if (adminError) {
+          console.error("Error creating admin record:", adminError);
+          throw adminError;
+        }
+        console.log("Admin record created successfully");
+      } else {
+        // Update existing admin record
+        const { error: adminUpdateError } = await supabase
+          .from('admins')
+          .update({ society_id: societyId })
+          .eq('user_id', userId);
+          
+        if (adminUpdateError) {
+          console.error("Error updating admin record:", adminUpdateError);
+          throw adminUpdateError;
+        }
+        console.log("Admin record updated successfully");
+      }
+      
+      toast.success("Society setup complete!");
+      
+      // Refresh the session to make sure all changes are reflected
+      await supabase.auth.refreshSession();
+      console.log("Session refreshed");
+      
+      // Navigate to dashboard with replace to prevent going back to create society
+      navigate("/admin/dashboard", { replace: true });
     } catch (error: any) {
       console.error("Society creation error:", error);
       toast.error("Failed to complete setup", {

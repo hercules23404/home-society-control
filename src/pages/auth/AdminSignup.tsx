@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
@@ -36,7 +37,7 @@ type FormData = z.infer<typeof formSchema>;
 
 const AdminSignup = () => {
   const navigate = useNavigate();
-  const { userRole, signUp, loading: authLoading } = useAuth();
+  const { userRole, loading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,29 +71,58 @@ const AdminSignup = () => {
     setIsLoading(true);
     
     try {
-      // Step 1: Register the user in Supabase Auth with metadata
-      const { success, error, userId } = await signUp(data.email, data.password, {
-        first_name: data.firstName,
-        last_name: data.lastName,
-        phone: data.phone,
-        role: 'admin' // This will be cast correctly by our function now
+      console.log("Starting admin registration process...");
+      
+      // Step 1: Register the user in Supabase Auth
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            phone: data.phone,
+            role: 'admin'
+          }
+        }
       });
 
-      if (!success || !userId) {
-        throw new Error(error || "User creation failed");
+      if (signUpError || !authData.user) {
+        throw new Error(signUpError?.message || "User creation failed");
       }
 
+      const userId = authData.user.id;
       console.log("Auth user created successfully:", userId);
       
-      // Step 2: Get the latest session to ensure we have the current auth state
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      // Step 2: Ensure the profile is created correctly
+      // Check if profile exists (it should be created by the database trigger)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
       
-      if (sessionError) {
-        console.error("Error retrieving session:", sessionError);
-        throw sessionError;
+      if (profileError) {
+        console.log("Profile check error or not found, creating manually:", profileError);
+        
+        // Create profile manually if the trigger failed
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: data.email,
+            first_name: data.firstName,
+            last_name: data.lastName,
+            phone: data.phone,
+            role: 'admin'
+          });
+        
+        if (createProfileError) {
+          console.error("Error creating profile manually:", createProfileError);
+          throw new Error("Failed to create user profile");
+        }
       }
       
-      console.log("Session retrieved:", sessionData.session ? "Valid" : "None");
       toast.success("Registration successful!");
       
       // Navigate to society creation with user data
