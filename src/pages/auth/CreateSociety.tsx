@@ -44,11 +44,12 @@ const CreateSociety = () => {
     }
   }, [userRole, navigate, authLoading, state]);
 
-  // Create admin handler to be passed to SocietyForm
+  // Handle society creation
   const handleSocietyCreated = async (societyId: string) => {
     if (isProcessing) return; // Prevent multiple submissions
     
     setIsProcessing(true);
+    console.log("Starting society setup process...");
     
     try {
       const userId = state?.userId || user?.id;
@@ -73,6 +74,7 @@ const CreateSociety = () => {
           console.error("Error updating profile:", profileError);
           throw profileError;
         }
+        console.log("Profile updated successfully");
         
         // Check if admin record exists
         const { data: existingAdmin } = await supabase
@@ -94,6 +96,7 @@ const CreateSociety = () => {
             console.error("Error creating admin record:", adminError);
             throw adminError;
           }
+          console.log("Admin record created successfully");
         } else {
           // Update existing admin record
           const { error: adminUpdateError } = await supabase
@@ -105,12 +108,14 @@ const CreateSociety = () => {
             console.error("Error updating admin record:", adminUpdateError);
             throw adminUpdateError;
           }
+          console.log("Admin record updated successfully");
         }
         
         toast.success("Society setup complete!");
         
         // Refresh the session to make sure all changes are reflected
         await supabase.auth.refreshSession();
+        console.log("Session refreshed");
         
         // Navigate to dashboard with replace to prevent going back to create society
         navigate("/admin/dashboard", { replace: true });

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
@@ -53,9 +52,6 @@ const AdminSignup = () => {
     }
   }, [userRole, navigate, isLoading, authLoading]);
 
-  // Always show form if not redirecting and not submitting
-  const shouldShowForm = !isLoading;
-
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -74,12 +70,12 @@ const AdminSignup = () => {
     setIsLoading(true);
     
     try {
-      // Step 1: Register the user in Supabase Auth
+      // Step 1: Register the user in Supabase Auth with metadata
       const { success, error, userId } = await signUp(data.email, data.password, {
         first_name: data.firstName,
         last_name: data.lastName,
         phone: data.phone,
-        role: 'admin'
+        role: 'admin' // This will be cast correctly by our function now
       });
 
       if (!success || !userId) {
@@ -87,26 +83,8 @@ const AdminSignup = () => {
       }
 
       console.log("Auth user created successfully:", userId);
-
-      // Step 2: Update the user's profile with additional information
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          first_name: data.firstName,
-          last_name: data.lastName, 
-          phone: data.phone,
-          role: 'admin'
-        })
-        .eq('id', userId);
-
-      if (profileError) {
-        console.error("Profile update error:", profileError);
-        throw profileError;
-      }
-
-      console.log("Profile updated successfully");
       
-      // Step 3: Get the latest session to ensure we have the current auth state
+      // Step 2: Get the latest session to ensure we have the current auth state
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {

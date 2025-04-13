@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -43,14 +42,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth state changed:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        // Defer user profile fetch to avoid deadlock
         if (newSession?.user) {
           setTimeout(() => {
             fetchUserProfile(newSession.user.id);
@@ -63,12 +60,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
-      // Fetch user profile if session exists
       if (currentSession?.user) {
         fetchUserProfile(currentSession.user.id);
       } else {
@@ -85,7 +80,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setLoading(true);
       
-      // Fetch user profile data from profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select(`
@@ -104,11 +98,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       if (profileData) {
-        // Set user role based on profile data
         setUserRole(profileData.role as UserRole);
         setSociety(profileData.societies);
         
-        // Update user object with profile data
         setUser(prev => ({
           ...prev,
           ...profileData,
@@ -121,7 +113,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           societyId: profileData.society_id
         });
       } else {
-        // No profile data found, user has no role assigned
         console.log('User has no profile data');
         setUserRole(null);
       }
@@ -142,7 +133,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (error) throw error;
       
-      // Auth state listener will handle session update
       return { success: true };
     } catch (error: any) {
       console.error('Login error:', error.message);
@@ -152,18 +142,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signUp = async (email: string, password: string, userData?: any) => {
     try {
+      console.log("Signing up with data:", { email, userData });
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            ...userData,
-            role: userData?.role || 'admin' // Default to admin for the new flow
+            first_name: userData?.first_name || "",
+            last_name: userData?.last_name || "",
+            phone: userData?.phone || "",
+            role: userData?.role || 'admin'
           }
         }
       });
 
       if (error) throw error;
+      
+      console.log("Signup successful, user data:", data);
       
       return { 
         success: true, 
@@ -190,7 +186,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       if (!user?.id) throw new Error('No user logged in');
 
-      // Update profile data
       const { error } = await supabase
         .from('profiles')
         .update(data)
@@ -198,7 +193,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (error) throw error;
 
-      // Update local state
       setUser(prev => ({
         ...prev,
         ...data,
